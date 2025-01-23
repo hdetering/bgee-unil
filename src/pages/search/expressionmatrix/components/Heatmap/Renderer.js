@@ -6,7 +6,7 @@ import { ColorLegendSvg } from "./ColorLegendSvg";
 // import styles from "./renderer.module.css";
 import fonts from "./fonts";
 
-const MARGIN = { top: 20, right: 10, bottom: 50, left: 200 };
+const MARGIN = { top: 50, right: 10, bottom: 50, left: 200 };
 const COLOR_LEGEND_MARGIN = { top: 0, right: 0, bottom: 50, left: 0 };
 
 export const Renderer = forwardRef(({
@@ -23,6 +23,7 @@ export const Renderer = forwardRef(({
   colorScale,
   backgroundColor,
   marginLeft,
+  xLabelRotation,
   yLabelJustify,
   showLegend,
   showMissingData,
@@ -371,9 +372,10 @@ export const Renderer = forwardRef(({
     return (
       <text
         key={`heatMapXLabel-${idx}`}
-        x={xCoord}
-        y={yCoord}
-        textAnchor="middle"
+        x={xLabelRotation === 0 ? xCoord : null}
+        y={xLabelRotation === 0 ? yCoord : null}
+        transform={xLabelRotation !== 0 ? `translate(${xCoord}, ${yCoord}) rotate(${xLabelRotation})` : null}
+        textAnchor={xLabelRotation === 0 ? "middle" : "start"}
         dominantBaseline="middle"             
         fontSize={15}
         // transform="`rotate(-10) translate(${xCoord}, ${yCoord})`"
@@ -397,9 +399,10 @@ export const Renderer = forwardRef(({
     return (
       <text
         key={`heatMapXLabel-${idx}`}
-        x={xCoord}
-        y={yCoord}
-        textAnchor="middle"
+        x={xLabelRotation === 0 ? xCoord : null}
+        y={xLabelRotation === 0 ? yCoord : null}
+        transform={xLabelRotation !== 0 ? `translate(${xCoord}, ${yCoord}) rotate(${xLabelRotation})` : null}
+        textAnchor={xLabelRotation === 0 ? "middle" : "end"}
         dominantBaseline="middle"             
         fontSize={15}
         // transform="`rotate(-10) translate(${xCoord}, ${yCoord})`"
@@ -546,7 +549,7 @@ export const Renderer = forwardRef(({
             <g>
               <ColorLegendSvg
                 posX={colorLegendPosX}
-                posY={colorLegendPosY}
+                posY={colorLegendPosY - 50}
                 width={colorLegendWidth}
                 height={colorLegendHeight}
                 colorScale={colorScale}

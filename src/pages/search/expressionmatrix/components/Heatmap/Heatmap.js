@@ -10,15 +10,13 @@ const SHOW_DEBUG_OPTIONS = false;
 
 export const Heatmap = ({ 
   width, 
-  height,
+  height = 800,
   backgroundColor,
   data,
   getChildData,
   getHomologsData,
   yTerms,
-  // setYTerms,
   termProps,
-  // setTermProps,
   yLabelJustify = 'right',
   onToggleExpandCollapse,
 }) => {
@@ -26,6 +24,7 @@ export const Heatmap = ({
   const [hoveredCell, setHoveredCell] = useState(null);
   const [clickedCell, setClickedCell] = useState(null);
   const [showLegend, setShowLegend] = useState(true);
+  const [xLabelRotation, setXLabelRotation] = useState(340);
   const [yLabelAlign, setYLabelAlign] = useState(yLabelJustify);
   const [graphWidth, setGraphWidth] = useState(width);
   const [graphHeight, setGraphHeight] = useState(height);
@@ -50,6 +49,13 @@ export const Heatmap = ({
   }
   const updateYLabelWidth = (event) => {
     setMarginLeft(event.target.value);
+  }
+  const updateXLabelRotation = (event) => {
+    try {
+      setXLabelRotation(parseInt(event.target.value, 10));
+    } catch (error) {
+      console.error(`[Heatmap] updateXLabelRotation: ${error}`);
+    }
   }
   const updateYLabelAlign = (event) => {
     setYLabelAlign(event.target.value);
@@ -103,7 +109,7 @@ export const Heatmap = ({
     const { count: numVisibleTerms, maxLabelLength}  = countVisibleTerms(yTerms);
     console.log(`[Heatmap] ${numVisibleTerms} visible terms`);
     console.log(`[Heatmap] yTerms:\n${JSON.stringify(yTerms, null, 2)}`);
-    const flexHeight = Math.max(numVisibleTerms * 20 + COLOR_LEGEND_HEIGHT, 250);
+    const flexHeight = Math.max(numVisibleTerms * 30 + COLOR_LEGEND_HEIGHT, 250);
     const flexMarginLeft = Math.max(maxLabelLength * 7.5 + 50, marginLeft);
     const flexWidth = Math.max(flexMarginLeft + 50, graphWidth);
     setGraphHeight(flexHeight);
@@ -233,6 +239,7 @@ export const Heatmap = ({
         onToggleExpandCollapse={onToggleExpandCollapse}
         colorScale={colorScale}
         marginLeft={marginLeft}
+        xLabelRotation={xLabelRotation}
         yLabelJustify={yLabelAlign}
         showLegend={showLegend}
         showMissingData={showMissingData}
@@ -331,6 +338,20 @@ export const Heatmap = ({
                       />
                     </td>
                   </tr>
+                  { SHOW_DEBUG_OPTIONS ? (
+                  <tr>
+                    <td>X label rotation:</td>
+                    <td>
+                      <input 
+                        type="text"
+                        size="10"
+                        value={xLabelRotation}
+                        onChange={updateXLabelRotation}
+                      />
+                    </td>
+                  </tr>
+                  ) : null}
+                  { SHOW_DEBUG_OPTIONS ? (
                   <tr>
                     <td>Y label justify:</td>
                     <td>
@@ -340,6 +361,7 @@ export const Heatmap = ({
                       </select>
                     </td>
                   </tr>
+                  ) : null}
                 </tbody>
               </table>
             </div>
