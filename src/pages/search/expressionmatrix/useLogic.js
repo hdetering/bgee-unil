@@ -14,7 +14,6 @@ import { EMPTY_SPECIES_VALUE } from './components/filters/Species/Species';
 import config from '../../../config.json';
 import { FULL_LENGTH_LABEL } from '../../../api/prod/constant';
 import { isEmpty } from '../../../helpers/arrayHelper';
-// import dataAnatTerms from '../../../assets/anatomy.curated.flat.csv';
 // DEBUG: remove in PROD
 // import maxExpScoreCsv from '../../../assets/maxExpScore.csv'
 
@@ -171,6 +170,7 @@ const useLogic = (isExprCalls) => {
   const initDataType = initSearch.get('data_type') || DATA_TYPES[0].id;
   const initDataTypeExpCalls = initSearch.getAll('data_type') || ALL_DATA_TYPES_ID;
   const initPageType = initSearch.get('pageType') || EXPERIMENTS;
+  const initSpecies = initSearch.getAll('species') || EMPTY_SPECIES_VALUE.value;
 
   // Page Type / Data Type
   // Page type = data in search params !
@@ -225,7 +225,6 @@ const useLogic = (isExprCalls) => {
   // Will determine if the User clicked on a link to come on Raw-Data page even though he is already on it
   // The page will reset to it default state
   const [needToResetThePage, setNeedToResetThePage] = useState(false);
-
 
   const [pageCanLoadFirstCount, setPageCanLoadFirstCount] = useState(false);
 
@@ -417,17 +416,6 @@ const useLogic = (isExprCalls) => {
   */
 
   useEffect(() => {
-    console.log(`[useLogic.js] loc.search CHANGED:\n${JSON.stringify(loc.search, null, 2)}`);
-
-    // If we are already on the Raw-Data page and we try to access it again in the Header all the search variables will be cleared.
-    // If there is no search variable we set back the page to it default state.
-    if(!loc.search && !isFirstSearch && !isLoading){
-      resetForm(false, true);
-    }
-
-  }, [loc.search]);
-
-  useEffect(() => {
     if (needToResetThePage) {
       // We set FirstSearch at TRUE so we don't trigger all the useEffect that checks for it
       setIsFirstSearch(true);
@@ -502,7 +490,7 @@ const useLogic = (isExprCalls) => {
   const onSubmit = () => {
     // triggerSearch(true, true);
     triggerInitialSearch();
-    triggerCounts();
+    // triggerCounts();
   };
 
   const addConditionalParam = (id) => {
@@ -518,8 +506,10 @@ const useLogic = (isExprCalls) => {
     const { requestDetails } = data;
 
     // Data type
-    const nextDataType = requestParameters.data_type[0];
-    setDataType(nextDataType);
+    const nextDataType = requestParameters.data_type?.[0];
+    if (nextDataType) {
+      setDataType(nextDataType);
+    }
 
     // Species
     if (requestDetails?.requestedSpecies) {
@@ -832,7 +822,6 @@ const useLogic = (isExprCalls) => {
         // After First search ( => hash !== null ) we update the filters via detailed_rp
         if (isFirstSearch) { // TODO: should always be true here - remove check?
           try {
-            // CONTINUE HERE
             initFormFromDetailedRP(resp1);
           } catch (e) {
             console.error('Error when parsing URL e = ', e);
@@ -1424,6 +1413,79 @@ const useLogic = (isExprCalls) => {
       setSelectedSexes(nextSexes);
     }
   };
+
+  const [isInitializingFromUrl, setIsInitializingFromUrl] = useState(false);
+
+  const initFormFromUrlParams = (searchParamsString) => {
+    const searchParams = new URLSearchParams(searchParamsString);
+    const speciesId = searchParams.get('species_id');
+    const geneIds = searchParams.getAll('gene_id');
+    console.log(`[useLogic.initFormFromUrlParams] species_id:\n${JSON.stringify(speciesId, null, 2)}`);
+    console.log(`[useLogic.initFormFromUrlParams] gene_id:\n${JSON.stringify(geneIds, null, 2)}`);
+
+    // Species
+    if (speciesId) {
+      setIsInitializingFromUrl(true); // Set flag before starting initialization
+      api.search.species.species(speciesId).then((resp) => {
+        if (resp.code === 200) {
+          setSelectedSpecies({
+            label: getSpeciesLabel(resp.data.species),
+            value: speciesId,
+          });
+
+          // Gene(s)
+          if (geneIds.length > 0) {            
+            // Create array of promises for all gene info requests
+            const genePromises = geneIds.map(geneId => 
+              api.search.genes.getGeneralInformation(geneId)
+            );
+
+            // Wait for all promises to resolve
+            Promise.all(genePromises)
+              .then(responses => {
+                const validGenes = responses
+                  .filter(resp => resp.code === 200)
+                  .map(resp => resp.data.genes?.[0])
+                  .filter(gene => gene) // Remove any undefined values
+                  .map(gene => ({
+                    label: getGeneLabel(gene),
+                    value: gene.geneId,
+                  }));
+                
+                setSelectedGene(validGenes);
+              })
+              .catch(error => {
+                console.error('Error fetching gene information:', error);
+                setIsInitializingFromUrl(false); // Reset flag on error
+              });
+          }
+        } else {
+          setSelectedSpecies(EMPTY_SPECIES_VALUE);
+          setIsInitializingFromUrl(false); // Reset flag if species lookup fails
+        }
+      });
+    }
+  }
+
+  useEffect(() => {
+    if (isInitializingFromUrl && selectedGene.length > 0 && selectedSpecies.value !== EMPTY_SPECIES_VALUE.value) {
+      triggerInitialSearch();
+      setIsInitializingFromUrl(false); // Reset flag after search is triggered
+    }
+  }, [selectedGene, selectedSpecies, isInitializingFromUrl]);
+
+  useEffect(() => {
+    console.log(`[useLogic.js] loc.search CHANGED:\n${JSON.stringify(loc.search, null, 2)}`);
+
+    // If we are already on the Raw-Data page and we try to access it again in the Header all the search variables will be cleared.
+    // If there is no search variable we set back the page to it default state.
+    if(!loc.search && !isFirstSearch && !isLoading){
+      resetForm(false, true);
+    } else {
+      initFormFromUrlParams(loc.search);
+    }
+
+  }, [loc.search]);
 
   const resetForm = (isSpeciesChange = false, pageWillBeReset = false) => {
     setSelectedCellTypes([]);
