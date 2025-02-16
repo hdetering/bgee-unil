@@ -518,6 +518,51 @@ const search = {
       }),
   },
   geneExpressionMatrix: {
+    // get request parameters from previous search
+    getRequestParams: (form, detailedRP = false) =>
+      new Promise((resolve, reject) => {
+        // populate request params
+        const params = DEFAULT_PARAMETERS('data', 'expr_calls');
+        params.append('get_results', '0');
+        params.append('display_rp', '1');
+        // request detailed response parameters
+        params.append('detailed_rp', detailedRP ? '1' : '0');
+
+        // are we using a dataHash?
+        if (form.initSearch) { // -> use initSearch params
+          // eslint-disable-next-line no-restricted-syntax
+          for (const [key, val] of form?.initSearch) {
+            if (
+              key !== 'data_type' &&
+              key !== 'offset' &&
+              key !== 'limit' &&
+              key !== 'pageType'
+            ) {
+              params.append(key, val);
+            }
+          }
+        }
+        
+        const paramsURLCalled = params.toString();
+
+        const typeToken = 'search'; // alternatives: 'count'
+        axiosInstance
+          .get(`/?${paramsURLCalled}`, {
+            cancelToken: new axios.CancelToken((c) => {
+              SEARCH_CANCEL_API.rawData[typeToken] = c;
+            }),
+          })
+          .then(({ data }) => {
+            SEARCH_CANCEL_API.rawData[typeToken] = null;
+            return resolve({ resp: data, paramsURLCalled });
+          // })
+          // .catch((error) => {
+          //   errorHandler(error);
+          //   reject(error?.response || error?.message);
+          });
+
+      }),
+
     // Initial search, requesting the top-level terms
     initialSearch: (form) =>
       new Promise((resolve, reject) => {
@@ -527,57 +572,80 @@ const search = {
         params.append('display_rp', '1');
         params.append('offset', '0');
         params.append('limit', '10000');
-        if (form.selectedTissue?.length > 0) {
-          // params.append('anat_entity_id', 'UBERON:0001062');
-          form.selectedTissue.forEach((t) => 
-            params.append('anat_entity_id', t)
+
+        // are we using a dataHash?
+        if (form.initSearch) { // -> use initSearch params
+          // eslint-disable-next-line no-restricted-syntax
+          for (const [key, val] of form?.initSearch) {
+            if (
+              key !== 'data_type' &&
+              key !== 'offset' &&
+              key !== 'limit' &&
+              key !== 'pageType'
+            ) {
+              params.append(key, val);
+            }
+          }
+          if (!form.initSearch.get('anat_entity_id')) {
+            params.append('anat_entity_id', 'SUMMARY');
+          }
+          if (!form.initSearch.get('cell_type_id')) {
+            params.append('cell_type_id', 'SUMMARY');
+          }
+        }
+        else { // -> use form params
+          if (form.selectedTissue?.length > 0) {
+            // params.append('anat_entity_id', 'UBERON:0001062');
+            form.selectedTissue.forEach((t) => 
+              params.append('anat_entity_id', t)
+            );
+          } else {
+            params.append('anat_entity_id', 'SUMMARY');
+          }
+          // if (form.hasTissueSubStructure) {
+          //   params.append('anat_entity_descendant', '1');
+          // }
+
+          // NOTE: not using cell types here bc we need to request top level terms first
+          // if (form.selectedCellTypes?.length > 0) {
+          //   form.selectedCellTypes.forEach((ct) => 
+          //     params.append('cell_type_id', ct)
+          //   );
+          // } else {
+            // params.append('cell_type_id', 'GO:0005575');
+            params.append('cell_type_id', 'SUMMARY');
+          // }
+          params.append('cond_param2', 'anat_entity');
+
+          // if (form.hasCellTypeSubStructure) {
+          //   params.append('cell_type_descendant', '1');
+          // }
+
+          // NOTE: searching by dev stage only makes sense if we display dev stages
+          // if (form.selectedDevStages?.length > 0) {
+          //   form.selectedDevStages.forEach((ds) => 
+          //     params.append('stage_id', ds)
+          //   );
+          //   params.append('cond_param2', 'dev_stage');
+          // }
+
+          // NOTE: searching by strain only makes sense if we display strains
+          // if (form.selectedStrain?.length > 0) {
+          //   form.selectedStrain.forEach((s) => 
+          //     params.append('strain', s)
+          //   );
+          //   params.append('cond_param2', 'strain');
+          // }
+          
+          if (form.selectedSpecies) {
+            params.append('species_id', form.selectedSpecies);
+          }
+          form.selectedGene.forEach((g) => 
+            params.append('gene_id', g)
           );
-        } else {
-          params.append('anat_entity_id', 'SUMMARY');
+          // [...]
         }
-        // if (form.hasTissueSubStructure) {
-        //   params.append('anat_entity_descendant', '1');
-        // }
 
-        // NOTE: not using cell types here bc we need to request top level terms first
-        // if (form.selectedCellTypes?.length > 0) {
-        //   form.selectedCellTypes.forEach((ct) => 
-        //     params.append('cell_type_id', ct)
-        //   );
-        // } else {
-          // params.append('cell_type_id', 'GO:0005575');
-          params.append('cell_type_id', 'SUMMARY');
-        // }
-        params.append('cond_param2', 'anat_entity');
-
-        // if (form.hasCellTypeSubStructure) {
-        //   params.append('cell_type_descendant', '1');
-        // }
-
-        // NOTE: searching by dev stage only makes sense if we display dev stages
-        // if (form.selectedDevStages?.length > 0) {
-        //   form.selectedDevStages.forEach((ds) => 
-        //     params.append('stage_id', ds)
-        //   );
-        //   params.append('cond_param2', 'dev_stage');
-        // }
-
-        // NOTE: searching by strain only makes sense if we display strains
-        // if (form.selectedStrain?.length > 0) {
-        //   form.selectedStrain.forEach((s) => 
-        //     params.append('strain', s)
-        //   );
-        //   params.append('cond_param2', 'strain');
-        // }
-        
-        if (form.selectedSpecies) {
-          params.append('species_id', form.selectedSpecies);
-        }
-        form.selectedGene.forEach((g) => 
-          params.append('gene_id', g)
-        );
-        // [...]
-        // const paramsURLCalled = params.toString();
         const paramsURLCalled = params.toString();
 
         const typeToken = 'search'; // alternatives: 'count'
@@ -603,32 +671,46 @@ const search = {
           // populate request params
           const params = DEFAULT_PARAMETERS('data', 'expr_calls');
           params.append('get_results', '1');
-          params.append('display_rp', '1');
           params.append('offset', '0');
           params.append('limit', '10000');
-          // if (form.selectedTissue?.length > 0) {
-          //  params.append('anat_entity_id', form.selectedTissue);
-          // } else {
+
+          // specific to this call
           params.append('anat_entity_id', 'SUMMARY');
-          // }
-          // NOTE: must be set for this call to work
-          params.append('anat_entity_descendant', '1');
           params.append('cell_type_id', 'SUMMARY');
           params.append('cond_param2', 'anat_entity');
-          
-          // specific to this call
           params.append('discard_anat_entity_and_children_id', 'SUMMARY');
           params.append('observed_data', '1');
+          // NOTE: must be set for this call to work
+          params.append('anat_entity_descendant', '1');
           params.append('exclude_non_informative', '1');
 
-          if (form.selectedSpecies) {
-            params.append('species_id', form.selectedSpecies);
+          // are we using a dataHash?
+          if (form.initSearch) { // -> use initSearch params
+            params.append('display_rp', '1');
+
+            // eslint-disable-next-line no-restricted-syntax
+            for (const [key, val] of form?.initSearch) {
+              if (
+                key !== 'data_type' &&
+                key !== 'offset' &&
+                key !== 'limit' &&
+                key !== 'pageType'
+              ) {
+                params.append(key, val);
+              }
+            }
           }
-          form.selectedGene.forEach((g) => 
-            params.append('gene_id', g)
-          );
+          else { // -> use form params
+            
+            if (form.selectedSpecies) {
+              params.append('species_id', form.selectedSpecies);
+            }
+            form.selectedGene.forEach((g) => 
+              params.append('gene_id', g)
+            );
+          }
+
           // [...]
-          // const paramsURLCalled = params.toString();
           const paramsURLCalled = params.toString();
   
           const typeToken = 'search'; // alternatives: 'count'

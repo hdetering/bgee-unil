@@ -439,12 +439,8 @@ const useLogic = (isExprCalls) => {
   }, [pageCanLoadFirstCount])
 
   const onChangeSpecies = (newSpecies) => {
-    setSelectedSpecies(newSpecies);
-    setSelectedCellTypes([]);
-    setSelectedGene([]);
-    setSelectedStrain([]);
-    setSelectedTissue([]);
-    setSelectedSexes([]);
+    console.log('[GENE_DEBUG] onChangeSpecies called');
+    updateSelectedSpecies(newSpecies, false); // Don't preserve genes for manual species changes
   };
 
   // TODO: adjust parameters for first search
@@ -481,16 +477,14 @@ const useLogic = (isExprCalls) => {
   }, [pageType]);
 
   useEffect(() => {
-    if (selectedSpecies.value !== EMPTY_SPECIES_VALUE.value) {
+    if (selectedSpecies.value !== EMPTY_SPECIES_VALUE.value && !isInitializingFromUrl) {
       getSexesAndDevStageForSpecies();
-      resetForm(true);
+      resetForm(true, false, false);  // Don't preserve genes for user interactions
     }
   }, [selectedSpecies]);
 
   const onSubmit = () => {
-    // triggerSearch(true, true);
     triggerInitialSearch();
-    // triggerCounts();
   };
 
   const addConditionalParam = (id) => {
@@ -500,10 +494,11 @@ const useLogic = (isExprCalls) => {
     }
   };
 
-  // CONTINUE HERE
-  const initFormFromDetailedRP = (resp) => {
+  const initFormFromDetailedRP = (resp, preserveGenes = false) => {
     const { requestParameters, data } = resp;
     const { requestDetails } = data;
+    console.log(`[useLogic.initFormFromDetailedRP] requestParameters:\n${JSON.stringify(requestParameters)}`);
+    console.log(`[useLogic.initFormFromDetailedRP] requestDetails:\n${JSON.stringify(requestDetails)}`);
 
     // Data type
     const nextDataType = requestParameters.data_type?.[0];
@@ -516,15 +511,13 @@ const useLogic = (isExprCalls) => {
       setSelectedSpecies({
         label: getSpeciesLabel(requestDetails?.requestedSpecies),
         value: requestDetails?.requestedSpecies?.id,
-      });
+      }, preserveGenes);
     }
 
     // Sexes
-    // Possible sexes
     if (requestDetails?.requestedSpeciesSexes?.length > 0) {
       setSpeciesSexes(requestDetails?.requestedSpeciesSexes);
     }
-    // Selected sexes
     if (
       requestParameters?.sex?.length > 0 &&
       requestParameters?.sex[0] !== 'all'
@@ -532,8 +525,8 @@ const useLogic = (isExprCalls) => {
       setSelectedSexes(requestParameters?.sex);
     }
 
-    // Genes
-    if (requestDetails?.requestedGenes?.length > 0) {
+    // Genes - only set if not preserving existing genes
+    if (!preserveGenes && requestDetails?.requestedGenes?.length > 0) {
       const initGenes = requestDetails?.requestedGenes.map((g) => ({
         label: getGeneLabel(g),
         value: g.geneId,
@@ -719,7 +712,7 @@ const useLogic = (isExprCalls) => {
       hasCellTypeSubStructure,
       hasDevStageSubStructure,
       hasTissueSubStructure,
-      queryGenes: [], // HD: store homologous genes
+      queryGenes: [],
     };
 
     // Here we are filtering the filters themself
@@ -765,11 +758,9 @@ const useLogic = (isExprCalls) => {
 
   // API QUERY 1: Get gene expression data for top-level anatomical terms
   // TODO: factor out repetitive code (between this function and triggerSearch, triggerInitialSearchComplementary)
-  const triggerInitialSearch = async () => {
-    const params = getSearchParams();
-    params.limit = BASE_LIMIT;
+  const triggerInitialSearch = async (initParams) => {
+    const params = initParams || getSearchParams();
     
-    // TODO: if only one gene was selected -> get gene homologs?
     console.log(`[useLogic.triggerInitialSearch] selected gene:\n${JSON.stringify(params.selectedGene)}`);
     console.log(`[useLogic.triggerInitialSearch] selected species:\n${JSON.stringify(params.selectedSpecies)}`);
     console.log(`[useLogic.triggerInitialSearch] params:\n${JSON.stringify(params)}`);
@@ -778,9 +769,6 @@ const useLogic = (isExprCalls) => {
 
     try {
       console.log(`[useLogic.triggerInitialSearch] submitting API requests...`);
-      // Perform two API calls in parallel:
-      //   API QUERY 1: Get genex data for top-level anatomical terms
-      //   API QUERY 2: Get genex for anatomical terms not nested below any top-level term 
       const [ result1, result2 ] = await Promise.all([
         api.search.geneExpressionMatrix.initialSearch(params),
         api.search.geneExpressionMatrix.initialSearchComplementary(params)
@@ -788,17 +776,11 @@ const useLogic = (isExprCalls) => {
 
       const { resp: resp1, paramsURLCalled: paramsURLCalled1 } = result1;
       const { resp: resp2 } = result2;
-
-      // const paramsURLCalled1 = params.toString();
-      // const [ resp1, resp2 ] = [ apiResp1, apiResp2 ];
       
       if (resp1.code === 200 && resp2.code === 200) {
-        // console.log(`[useLogic.triggerInitialSearch] QUERY 1 response:`)
         console.log(JSON.stringify(resp1));
-        // console.log(`[useLogic.triggerInitialSearch] QUERY 2 response:`)
         console.log(JSON.stringify(resp2));
 
-        // Prepare term hierarchy from returned terms
         const{ anatTerms, termProps } = prepTermHierarchy(resp1.data.expressionData.expressionCalls);
         console.log(`[useLogic.triggerInitialSearch] anatTerms:\n${JSON.stringify(anatTerms)}`);
         setAnatomicalTerms(anatTerms);
@@ -809,46 +791,37 @@ const useLogic = (isExprCalls) => {
           termProps, 
           resp2.data.expressionData.expressionCalls
         );
-        // Merge newTermProps into the original termProps
         Object.assign(termProps, newTermProps);
         setAnatomicalTermsProps(termProps);
 
-        // merge genex data from both calls
         const { data } = resp1;
-        // console.log(`[useLogic.triggerInitialSearch] data before:\n${JSON.stringify(data.expressionData.expressionCalls)}`);
         data.expressionData.expressionCalls.push(...resp2.data.expressionData.expressionCalls);
-        // console.log(`[useLogic.triggerInitialSearch] data after:\n${JSON.stringify(data.expressionData.expressionCalls)}`);
 
-        // After First search ( => hash !== null ) we update the filters via detailed_rp
-        if (isFirstSearch) { // TODO: should always be true here - remove check?
+        // After First search we update the filters via detailed_rp
+        if (isFirstSearch) {
           try {
-            initFormFromDetailedRP(resp1);
+            console.log(`[useLogic.triggerInitialSearch] initFormFromDetailedRP...`);
+            const preserveGenes = isInitializingFromUrl;
+            initFormFromDetailedRP(resp1, preserveGenes);
           } catch (e) {
             console.error('Error when parsing URL e = ', e);
           }
         }
 
-        // "Mirroring" management in URL's parameter (with & without hash)
+        // "Mirroring" management in URL's parameter
         const searchParams = new URLSearchParams(paramsURLCalled1);
-        // If there is a hash we put it in the URL
-        // And as all next data are "coded" in the Hash...
-        // We can clear the URL from those (aka storableParams)
         const newHash = resp1?.requestParameters?.data;
         if (newHash) {
-          // We delete the potential old hash
           searchParams.delete('data');
-
           resp1?.requestParameters?.storableParameters?.forEach((key) => {
             if (key !== 'data_type') {
               searchParams.delete(key);
             }
           });
-
-          // Adding Hash (in "data" key)
           searchParams.append('data', newHash);
         }
 
-        // We can always clean those "tech" parameters from the URL
+        // Clean URL parameters
         searchParams.delete('display_type');
         searchParams.delete('page');
         searchParams.delete('action');
@@ -861,7 +834,6 @@ const useLogic = (isExprCalls) => {
         searchParams.delete('get_result_count');
         searchParams.delete('filters_for_all');
 
-        // The following code clean the url of any default value
         if (searchParams.get('pageType') === 'experiments') {
           searchParams.delete('pageType');
         }
@@ -874,9 +846,7 @@ const useLogic = (isExprCalls) => {
         if (searchParams.get('stage_descendant') === 'true') {
           searchParams.delete('stage_descendant');
         }
-        // if (searchParams.get('anat_entity_descendant') === 'true') {
-        //   searchParams.delete('anat_entity_descendant');
-        // }
+
         if (isFirstSearch) {
           history.replace({
             search: searchParams.toString(),
@@ -889,25 +859,20 @@ const useLogic = (isExprCalls) => {
           });
         }
         
-        // The search form will be collapsed if this is not the first time we're on the page
         if (!isFirstSearch) {
-          setShow(false); // TODO: give this function a more specific name
+          setShow(false);
         }
 
-        // Finally, we set the values we are interested in
         setIsLoading(false);
         setSearchResult(data);
       }
-    // } catch (error) {
-    //   console.log(`[useLogic.triggerInitialSearch] ERROR:\n${JSON.stringify(error)}`)
-    //   // We remove all the parameters that we may have sent
-    //   history.replace(`${URL_ROOT}${loc.pathname}`);
-    //   setIsLoading(false);
+    } catch (error) {
+      console.log(`[useLogic.triggerInitialSearch] ERROR:\n${JSON.stringify(error)}`)
+      history.replace(`${URL_ROOT}${loc.pathname}`);
+      setIsLoading(false);
     } finally {
       console.log(`[useLogic.triggerInitialSearch] finally.`)
-        // The next searches will not be considered as the first
-        // --> Filters will now be used for the next requests
-        setIsFirstSearch(false);
+      setIsFirstSearch(false);
     }
   };
 
@@ -1279,7 +1244,7 @@ const useLogic = (isExprCalls) => {
           // DEBUG: remove console log in prod
           console.log(`[useLogic] triggerSearchChildren anatomicalTerms:\n${JSON.stringify(anatomicalTerms)}`);
           console.log(`[useLogic] triggerSearchChildren newAnatTerms:\n${JSON.stringify(newAnatTerms)}`);
-          console.log(`[useLogic] triggerSearchChildren CALL setAnatomicalTerms`);
+          console.log(`[useLogic] CALL setAnatomicalTerms`);
           setAnatomicalTerms(newAnatTerms);
           // add term props for new terms
           const newAnatTermsProps = {...anatomicalTermsProps};
@@ -1416,64 +1381,102 @@ const useLogic = (isExprCalls) => {
 
   const [isInitializingFromUrl, setIsInitializingFromUrl] = useState(false);
 
-  const initFormFromUrlParams = (searchParamsString) => {
-    const searchParams = new URLSearchParams(searchParamsString);
-    const speciesId = searchParams.get('species_id');
-    const geneIds = searchParams.getAll('gene_id');
-    console.log(`[useLogic.initFormFromUrlParams] species_id:\n${JSON.stringify(speciesId, null, 2)}`);
-    console.log(`[useLogic.initFormFromUrlParams] gene_id:\n${JSON.stringify(geneIds, null, 2)}`);
-
-    // Species
-    if (speciesId) {
-      setIsInitializingFromUrl(true); // Set flag before starting initialization
-      api.search.species.species(speciesId).then((resp) => {
-        if (resp.code === 200) {
-          setSelectedSpecies({
-            label: getSpeciesLabel(resp.data.species),
-            value: speciesId,
-          });
-
-          // Gene(s)
-          if (geneIds.length > 0) {            
-            // Create array of promises for all gene info requests
-            const genePromises = geneIds.map(geneId => 
-              api.search.genes.getGeneralInformation(geneId)
-            );
-
-            // Wait for all promises to resolve
-            Promise.all(genePromises)
-              .then(responses => {
-                const validGenes = responses
-                  .filter(resp => resp.code === 200)
-                  .map(resp => resp.data.genes?.[0])
-                  .filter(gene => gene) // Remove any undefined values
-                  .map(gene => ({
-                    label: getGeneLabel(gene),
-                    value: gene.geneId,
-                  }));
-                
-                setSelectedGene(validGenes);
-              })
-              .catch(error => {
-                console.error('Error fetching gene information:', error);
-                setIsInitializingFromUrl(false); // Reset flag on error
-              });
-          }
-        } else {
-          setSelectedSpecies(EMPTY_SPECIES_VALUE);
-          setIsInitializingFromUrl(false); // Reset flag if species lookup fails
-        }
-      });
+  const setSelectedSpeciesFromUrl = (species) => {
+    setSelectedSpecies(species);
+    if (species.value !== EMPTY_SPECIES_VALUE.value) {
+      getSexesAndDevStageForSpecies();
+      resetForm(true, false, true);  // Always preserve genes during URL init
     }
-  }
+  };
 
+  const initFromUrlParams = async () => {
+    const params = {
+      hash: initHash,
+      isFirstSearch: true,
+      initSearch,
+    };
+
+    try {
+      setIsInitializingFromUrl(true);
+      
+      const resp1 = await api.search.geneExpressionMatrix.getRequestParams(params, false);
+      if (resp1.resp.code === 200) {
+        console.log(`[useLogic.initFromUrlParams] simple RP resp:\n${JSON.stringify(resp1, null, 2)}`);
+        
+        const simpleParams = resp1.resp.requestParameters;
+        const searchParamsNew = new URLSearchParams();
+
+        // add simple params to new search params
+        Object.entries(simpleParams).forEach(([key, value]) => {
+          if (
+            key === 'gene_id' ||
+            key === 'cond_param2'
+          ) { // multiple values possible
+            value.forEach((geneId) => {
+              searchParamsNew.append(key, geneId);
+            });
+          } else if (key === 'anat_entity_id' || key === 'cell_type_id') {
+            value.forEach((id) => {
+              if (id !== 'SUMMARY') {
+                searchParamsNew.append(key, id);
+              }
+            });
+          } else if (key === 'species_id') {
+            searchParamsNew.append(key, value);
+          }
+        });
+        params.initSearch = searchParamsNew;
+        
+        // Step 2: get detailed request parameters
+        const resp2 = await api.search.geneExpressionMatrix.getRequestParams(params, true);
+        if (resp2.resp.code === 200) {
+          console.log(`[useLogic.initFromUrlParams] detailed RP resp:\n${JSON.stringify(resp2, null, 2)}`);
+          const { requestDetails } = resp2.resp.data;
+          const {
+            requestedSpecies,
+            requestedGenes,
+          } = requestDetails;
+
+          // Use wrapper for species initialization
+          if (requestedSpecies) {
+            setSelectedSpeciesFromUrl({
+              label: getSpeciesLabel(requestedSpecies),
+              value: requestedSpecies.id,
+            });
+          }
+
+          // Set genes after species
+          if (requestedGenes?.length > 0) {
+            setSelectedGene(
+              requestedGenes.map(gene => ({
+                label: getGeneLabel(gene),
+                value: gene.geneId,
+              }))
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[initFromUrlParams] Error:', error);
+    } finally {
+      setIsInitializingFromUrl(false);
+    }
+  };
+
+  // Add useEffect to trigger search when initialization is complete
   useEffect(() => {
     if (isInitializingFromUrl && selectedGene.length > 0 && selectedSpecies.value !== EMPTY_SPECIES_VALUE.value) {
+      console.log('[useEffect] States ready for search:', {
+        selectedGene,
+        selectedSpecies,
+        isInitializingFromUrl
+      });
       triggerInitialSearch();
-      setIsInitializingFromUrl(false); // Reset flag after search is triggered
+      setIsInitializingFromUrl(false); // Reset flag after triggering search
     }
   }, [selectedGene, selectedSpecies, isInitializingFromUrl]);
 
+  // URL change handler
   useEffect(() => {
     console.log(`[useLogic.js] loc.search CHANGED:\n${JSON.stringify(loc.search, null, 2)}`);
 
@@ -1481,15 +1484,21 @@ const useLogic = (isExprCalls) => {
     // If there is no search variable we set back the page to it default state.
     if(!loc.search && !isFirstSearch && !isLoading){
       resetForm(false, true);
-    } else {
-      initFormFromUrlParams(loc.search);
+    } else if (loc.search?.length > 0 && !isInitializingFromUrl) {
+      // Only initialize if we're not already in the process of initializing
+      setIsInitializingFromUrl(true);
+      initFromUrlParams();
     }
 
-  }, [loc.search]);
+  }, [loc.search]); // Remove isInitializingFromUrl from dependencies to prevent loops
 
-  const resetForm = (isSpeciesChange = false, pageWillBeReset = false) => {
+  const resetForm = (isSpeciesChange = false, pageWillBeReset = false, preserveGenes = false) => {
+    console.log(`[GENE_DEBUG] resetForm called with:`, {isSpeciesChange, pageWillBeReset, preserveGenes});
+    if (!preserveGenes) {
+      console.log(`[GENE_DEBUG] Clearing genes in resetForm`);
+      setSelectedGene([]);
+    }
     setSelectedCellTypes([]);
-    setSelectedGene([]);
     setSelectedStrain([]);
     setSelectedTissue([]);
     setSelectedSexes([]);
@@ -1508,8 +1517,6 @@ const useLogic = (isExprCalls) => {
 
   // updates component state!
   const onToggleExpandCollapse = (term) => {
-    // DEBUG: remove console log in prod
-    // console.log(`[useLogic] onToggleExpandCollapse:\n${term.id}`);
     console.log(`[useLogic] onToggleExpandCollapse:\n${JSON.stringify(term)}`);
 
     function updateExpandedStateHierarchically(terms) {
@@ -1523,7 +1530,6 @@ const useLogic = (isExprCalls) => {
           const newItem = JSON.parse(JSON.stringify(item)); // { ...item };
           if (item.id === term.id) {
             // get data for descendants
-            // if (!newItem.isExpanded && !item.hasBeenQueried) {
             if (!item.hasBeenQueried) {
               console.log(`[useLogic] onToggleExpandCollapse - get child data for:\n${term.id}`);
               triggerSearchChildren(term.id, term.anatEntityId);
@@ -1532,7 +1538,6 @@ const useLogic = (isExprCalls) => {
               newTermProps[term.id].hasBeenQueried = true;
               newTermProps[term.id].isExpanded = true;
             } else {
-              // DEBUG: remove console log in prod
               console.log(`[useLogic] flipping item.isExpanded from ${item.isExpanded} to ${!item.isExpanded}.`);
               newItem.isExpanded = !item.isExpanded; // Flip expanded state
               newItem.isPopulated = item.isPopulated; // Keep populated state
@@ -1540,7 +1545,6 @@ const useLogic = (isExprCalls) => {
           }
           newItem.children = traverse(newItem.children); // Recursively traverse children
           if (item.termId === term.id) {
-            // DEBUG: remove console log in prod
             console.log(JSON.stringify(newItem));
           }
           return newItem;
@@ -1553,7 +1557,6 @@ const useLogic = (isExprCalls) => {
     }
 
     const {newDrilldown, newTermProps} = updateExpandedStateHierarchically(anatomicalTerms);
-    // DEBUG: remove console log in prod
     console.log(`[useLogic] TEST newDrilldown:\n${JSON.stringify(newDrilldown)}`);
     console.log(`[useLogic] TEST newTermProps:\n${JSON.stringify(newTermProps)}`);
     console.log(`[useLogic] CALL setAnatomicalTermsProps...`);
@@ -1562,6 +1565,34 @@ const useLogic = (isExprCalls) => {
     setAnatomicalTerms(newDrilldown);
     console.log(`[useLogic] DONE onToggleExpandCollapse.`);
   }
+
+  const initializeFromRequestDetails = (requestDetails) => {
+    const {
+      requestedSpecies,
+      requestedGenes,
+      requestedSpeciesSexes,
+      requestedAnatEntitesAndCellTypes,
+      requestedSpeciesDevStageOntology,
+    } = requestDetails;
+
+    if (requestedSpecies) {
+      setSelectedSpeciesFromUrl({
+        label: getSpeciesLabel(requestedSpecies),
+        value: requestedSpecies.id,
+      });
+    }
+
+    if (requestedGenes?.length > 0) {
+      setSelectedGene(
+        requestedGenes.map(gene => ({
+          label: getGeneLabel(gene),
+          value: gene.geneId,
+        }))
+      );
+    }
+
+    // ... other initializations
+  };
 
   return {
     searchResult,
@@ -1627,7 +1658,8 @@ const useLogic = (isExprCalls) => {
     triggerCounts,
     addConditionalParam,
     getSearchParams,
-    onToggleExpandCollapse
+    onToggleExpandCollapse,
+    initializeFromRequestDetails
   };
 };
 
