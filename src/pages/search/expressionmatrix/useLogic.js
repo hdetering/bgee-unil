@@ -438,6 +438,15 @@ const useLogic = (isExprCalls) => {
     }
   }, [pageCanLoadFirstCount])
 
+  const updateSelectedSpecies = (newSpecies, preserveGenes = false) => {
+    console.log('[GENE_DEBUG] updateSelectedSpecies called with:', {newSpecies, preserveGenes});
+    setSelectedSpecies(newSpecies);
+    if (newSpecies.value !== EMPTY_SPECIES_VALUE.value) {
+      getSexesAndDevStageForSpecies();
+      resetForm(true, false, preserveGenes);  // Pass preserveGenes flag to resetForm
+    }
+  };
+
   const onChangeSpecies = (newSpecies) => {
     console.log('[GENE_DEBUG] onChangeSpecies called');
     updateSelectedSpecies(newSpecies, false); // Don't preserve genes for manual species changes
