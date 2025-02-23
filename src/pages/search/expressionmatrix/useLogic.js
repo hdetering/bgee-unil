@@ -181,6 +181,11 @@ const useLogic = (isExprCalls) => {
   const [dataTypesExpCalls, setDataTypesExpCalls] =
     useState(initDataTypeExpCalls);
 
+  // Add state for tracking initialization from URL params
+  const [isInitializingFromUrl, setIsInitializingFromUrl] = useState(false);
+  // Add state for tracking gene list initialization
+  const [isProcessingGeneList, setIsProcessingGeneList] = useState(false);
+
   // lists
   const [speciesSexes, setSpeciesSexes] = useState([]);
   const [devStages, setDevStages] = useState([]);
@@ -1388,8 +1393,6 @@ const useLogic = (isExprCalls) => {
     }
   };
 
-  const [isInitializingFromUrl, setIsInitializingFromUrl] = useState(false);
-
   const setSelectedSpeciesFromUrl = (species) => {
     setSelectedSpecies(species);
     if (species.value !== EMPTY_SPECIES_VALUE.value) {
@@ -1489,22 +1492,40 @@ const useLogic = (isExprCalls) => {
   useEffect(() => {
     console.log(`[useLogic.js] loc.search CHANGED:\n${JSON.stringify(loc.search, null, 2)}`);
 
-    // If we are already on the Raw-Data page and we try to access it again in the Header all the search variables will be cleared.
-    // If there is no search variable we set back the page to it default state.
-    if(!loc.search && !isFirstSearch && !isLoading){
+    const searchParams = new URLSearchParams(loc.search);
+    const geneList = searchParams.get('gene_list');
+
+    if (geneList) {
+      processGeneList(geneList);
+    } else if(!loc.search && !isFirstSearch && !isLoading) {
       resetForm(false, true);
-    } else if (loc.search?.length > 0 && !isInitializingFromUrl) {
-      // Only initialize if we're not already in the process of initializing
+    } else if (loc.search?.length > 0 && !isInitializingFromUrl && !isProcessingGeneList) {
       setIsInitializingFromUrl(true);
       initFromUrlParams();
     }
 
-  }, [loc.search]); // Remove isInitializingFromUrl from dependencies to prevent loops
+  }, [loc.search]);
+
+  // Modify search trigger effect to include gene list processing state
+  useEffect(() => {
+    if ((isInitializingFromUrl || isProcessingGeneList) && 
+        selectedGene.length > 0 && 
+        selectedSpecies.value !== EMPTY_SPECIES_VALUE.value) {
+      console.log('[useEffect] States ready for search:', {
+        selectedGene,
+        selectedSpecies,
+        isInitializingFromUrl,
+        isProcessingGeneList
+      });
+      triggerInitialSearch();
+      setIsInitializingFromUrl(false);
+    }
+  }, [selectedGene, selectedSpecies, isInitializingFromUrl, isProcessingGeneList]);
 
   const resetForm = (isSpeciesChange = false, pageWillBeReset = false, preserveGenes = false) => {
-    console.log(`[GENE_DEBUG] resetForm called with:`, {isSpeciesChange, pageWillBeReset, preserveGenes});
+    console.log(`[useLogic.resetForm] resetForm called with:`, {isSpeciesChange, pageWillBeReset, preserveGenes});
     if (!preserveGenes) {
-      console.log(`[GENE_DEBUG] Clearing genes in resetForm`);
+      console.log(`[useLogic.resetForm] Clearing genes in resetForm`);
       setSelectedGene([]);
     }
     setSelectedCellTypes([]);
@@ -1603,6 +1624,72 @@ const useLogic = (isExprCalls) => {
     // ... other initializations
   };
 
+  // Add function to process gene list
+  const processGeneList = async (geneListParam) => {
+    if (!geneListParam) return;
+    
+    setIsProcessingGeneList(true);
+    const geneIds = geneListParam.split(/[\r\n]+/);
+    
+    try {
+      // Get search results for all genes
+      const searchResults = await Promise.all(
+        geneIds.map(geneId => 
+          api.search.genes.geneSearchResult(geneId)
+        )
+      );
+
+      // Process results
+      const validResults = searchResults.filter(result => 
+        result.code === 200 && 
+        result.data.result.totalMatchCount === 1
+      );
+
+      if (validResults.length === 0) {
+        console.error('No valid gene matches found');
+        return;
+      }
+
+      // Get first gene's species
+      const firstSpecies = validResults[0].data.result.geneMatches[0].gene.species;
+      
+      // Verify all genes are from same species
+      const allSameSpecies = validResults.every(result => 
+        result.data.result.geneMatches[0].gene.species.id === firstSpecies.id
+      );
+
+      if (!allSameSpecies) {
+        console.error('Genes must all be from the same species');
+        return;
+      }
+
+      // Set species
+      const speciesValue = {
+        label: getSpeciesLabel(firstSpecies),
+        value: firstSpecies.id
+      };
+      
+      // Set genes
+      const genes = validResults.map(result => {
+        const { gene } = result.data.result.geneMatches[0];
+        return {
+          label: getGeneLabel(gene),
+          value: gene.geneId
+        };
+      });
+
+      // Update state with species and genes
+      setIsInitializingFromUrl(true);
+      setSelectedSpeciesFromUrl(speciesValue);
+      setSelectedGene(genes);
+
+    } catch (error) {
+      console.error('Error processing gene list:', error);
+    } finally {
+      setIsProcessingGeneList(false);
+    }
+  };
+
   return {
     searchResult,
     anatomicalTerms,
@@ -1668,7 +1755,9 @@ const useLogic = (isExprCalls) => {
     addConditionalParam,
     getSearchParams,
     onToggleExpandCollapse,
-    initializeFromRequestDetails
+    initializeFromRequestDetails,
+    isProcessingGeneList,
+    processGeneList,
   };
 };
 

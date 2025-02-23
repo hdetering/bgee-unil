@@ -574,7 +574,7 @@ const search = {
         params.append('limit', '10000');
 
         // are we using a dataHash?
-        if (form.initSearch) { // -> use initSearch params
+        if (form.initSearch && form.initSearch.length > 0) { // -> use initSearch params
           // eslint-disable-next-line no-restricted-syntax
           for (const [key, val] of form?.initSearch) {
             if (
@@ -685,7 +685,7 @@ const search = {
           params.append('exclude_non_informative', '1');
 
           // are we using a dataHash?
-          if (form.initSearch) { // -> use initSearch params
+          if (form.initSearch && form.initSearch.length > 0) { // -> use initSearch params
             params.append('display_rp', '1');
 
             // eslint-disable-next-line no-restricted-syntax

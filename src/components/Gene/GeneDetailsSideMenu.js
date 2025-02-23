@@ -35,12 +35,12 @@ const GeneDetailsSideMenu = ({ homologs = null, xRefs }) => {
             General information
           </a>
         </li>
-        <li onClick={() => handlerMenuClick(GENE_DETAILS_HTML_IDS.EXPRESSION)}>
+        <li onClick={() => handlerMenuClick(GENE_DETAILS_HTML_IDS.EXPRESSION_TABLE)}>
           <a className="is-size-5 has-text-weight-semibold">Expression</a>
         </li>
         <li
           onClick={() =>
-            handlerMenuClick(GENE_DETAILS_HTML_IDS.EXPRESSION_ABSENT)
+            handlerMenuClick(GENE_DETAILS_HTML_IDS.EXPRESSION_ABSENT_TABLE)
           }
         >
           <a className="is-size-5 has-text-weight-semibold">

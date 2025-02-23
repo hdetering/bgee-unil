@@ -524,8 +524,8 @@ const GeneExpression = ({ geneId, speciesId, notExpressed }) => {
         className="gradient-underline"
         id={
           notExpressed
-            ? GENE_DETAILS_HTML_IDS.EXPRESSION_ABSENT
-            : GENE_DETAILS_HTML_IDS.EXPRESSION
+            ? GENE_DETAILS_HTML_IDS.EXPRESSION_ABSENT_TABLE
+            : GENE_DETAILS_HTML_IDS.EXPRESSION_TABLE
         }
         renderAs="h2"
       >

@@ -142,7 +142,7 @@ const GeneDetails = ({
             <Bulma.Title size={4} className="gradient-underline" renderAs="h2">
               General information
             </Bulma.Title>
-            <div className=" near-columns">
+            <div className="near-columns">
               <Bulma.Columns className="my-0">
                 <Bulma.C size={3}>
                   <p className="has-text-weight-semibold">Gene identifier</p>

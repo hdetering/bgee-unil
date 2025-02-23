@@ -182,6 +182,7 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
     return '';
   });
 
+  // TODO: use dedicated styling classes?
   return (
     <>
       <div className="rawDataAnnotation">
@@ -371,20 +372,19 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
                 {show ? 'Hide Form' : 'Show Form'}
               </button>
             </div>
+
+            <p>
+              Example:
+              <br />
+              <a className="internal-link" href={`${URL_ROOT}/search/expression-matrix?data=43254035c4a47f95a94ce2114c098c1fbd675fe1`}>
+                Olfactory receptor genes (D. melanogaster)
+              </a>
+            </p>
+
             <h2 className="gradient-underline title is-size-5 has-text-primary">
               {detailedData?.resultLabel}
             </h2>
-            {!isExprCalls && (
-              <ResultTabs
-                dataTypes={DATA_TYPES}
-                dataType={dataType}
-                setDataType={setDataType}
-                allCounts={allCounts}
-                pageType={pageType}
-                isCountLoading={isCountLoading}
-                localCount={localCount}
-              />
-            )}
+
             <div className="resultPart" style={{ position: 'relative' }}>
               {isLoading && (
                 <div style={{
@@ -407,17 +407,6 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
                     }}
                   />
                 </div>
-              )}
-              
-              {!!searchResult && dataType && (
-                <RawDataAnnotationsFilters
-                  dataFilters={dataFilters}
-                  dataType={dataType}
-                  filters={filters}
-                  setFilters={setFilters}
-                  triggerSearch={triggerSearch}
-                  triggerCounts={triggerCounts}
-                />
               )}
               
               <GeneExpressionMatrixResults
