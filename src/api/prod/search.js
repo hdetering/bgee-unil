@@ -594,6 +594,9 @@ const search = {
           }
         }
         else { // -> use form params
+          if (form.dataType?.length > 0) {
+            form.dataType.forEach((type) => params.append('data_type', type));
+          }
           if (form.selectedTissue?.length > 0) {
             // params.append('anat_entity_id', 'UBERON:0001062');
             form.selectedTissue.forEach((t) => 
@@ -701,7 +704,9 @@ const search = {
             }
           }
           else { // -> use form params
-            
+            if (form.dataType?.length > 0) {
+              form.dataType.forEach((type) => params.append('data_type', type));
+            }
             if (form.selectedSpecies) {
               params.append('species_id', form.selectedSpecies);
             }
@@ -751,7 +756,7 @@ const search = {
           form.dataType.forEach((type) => params.append('data_type', type));
 
           params.append('get_results', '1');
-          params.append('get_filters', '1');
+          // params.append('get_filters', '1');
           // params.append('get_column_definition', '1');
           // display-rp is needed to extract key-value pair in order to pre-fill the form
           params.append('display_rp', '1');
@@ -813,10 +818,15 @@ const search = {
           form.selectedSexes.forEach((s) => 
             params.append('sex', s)
           );
-
-          params.append('cell_type_descendant', form.hasCellTypeSubStructure);
-          params.append('anat_entity_descendant', form.hasTissueSubStructure);
-          params.append('stage_descendant', form.hasDevStageSubStructure);
+          if (form.hasTissueSubStructure) {
+            params.append('anat_entity_descendant', '1');
+          }
+          if (form.hasCellTypeSubStructure) {
+            params.append('cell_type_descendant', '1');
+          }
+          if (form.hasDevStageSubStructure) {
+            params.append('stage_descendant', '1');
+          }
           
           // Search form for Expression calls
           if (form?.dataQuality) {

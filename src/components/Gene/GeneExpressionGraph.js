@@ -1,77 +1,68 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useState, useEffect, useMemo } from 'react';
+import { useLocation, useHistory } from 'react-router-dom';
 import Bulma from '../Bulma';
 import api from '../../api';
 import Heatmap from '../Heatmap/Heatmap';
 import GENE_DETAILS_HTML_IDS from '../../helpers/constants/GeneDetailsHtmlIds';
+import useQuery from '../../hooks/useQuery';
+import config from '../../config.json';
 
+const APP_VERSION = config.version;
+const URL_VERSION = APP_VERSION.replaceAll('.', '-');
+const URL_ROOT = `${config.archive ? `/${URL_VERSION}` : ''}`;
+
+const DATA_TYPES = [
+  {
+    key: 'AFFYMETRIX',
+    text: 'Affymetrix',
+  },
+  {
+    key: 'EST',
+    text: 'EST',
+  },
+  {
+    key: 'IN_SITU',
+    text: 'In Situ',
+  },
+  {
+    key: 'RNA_SEQ',
+    text: 'RNA Seq',
+  },
+  {
+    key: 'SC_RNA_SEQ',
+    text: 'scRNA-Seq',
+  },
+];
+export const ALL_DATA_TYPES = DATA_TYPES.map((data) => data.key);
 export const ROOT_TERM_ANAT_ENTITY = 'UBERON:0001062-GO:0005575';
 export const BASE_LIMIT = '10000';
 export const EXPR_CALLS = 'expr_calls';
-export const AFFYMETRIX = 'AFFYMETRIX';
-export const EST = 'EST';
-export const IN_SITU = 'IN_SITU';
-export const RNA_SEQ = 'RNA_SEQ';
-export const ID_FULL_LENGTH = 'SC_RNA_SEQ';
-const dataTypeConf = [
-  {
-    position: 1,
-    type: {
-      id: RNA_SEQ,
-      label: 'bulk RNA-Seq',
-      sourceLetter: 'R',
-    },
-  },
-  {
-    position: 2,
-    type: {
-      id: ID_FULL_LENGTH,
-      label: 'scRNA-Seq',
-      sourceLetter: "SC",
-    },
-  },
-  {
-    position: 3,
-    type: {
-      id: AFFYMETRIX,
-      label: 'Affymetrix data',
-      sourceLetter: 'A',
-    },
-  },
-  {
-    position: 4,
-    type: {
-      id: IN_SITU,
-      label: 'In situ hybridization',
-      sourceLetter: 'I',
-    },
-  },
-  {
-    position: 5,
-    type: {
-      id: EST,
-      label: 'EST',
-      sourceLetter: 'E',
-    },
-  },
-];
-const sortedDataTypes = dataTypeConf
-  .filter((t) => !!t.position)
-  .sort((a, b) => a.position - b.position)
-  .map((data) => data.type);
-export const DATA_TYPES = sortedDataTypes;
-export const ALL_DATA_TYPES = dataTypeConf.map((data) => data.type);
-export const ALL_DATA_TYPES_ID = ALL_DATA_TYPES.map((d) => d.id);
 
 const GeneExpressionGraph = ({ geneId, speciesId }) => {
   // Init from URL
   const loc = useLocation();
   const initSearch = new URLSearchParams(loc.search);
+  const initDataType = initSearch.getAll('data_type') || ALL_DATA_TYPES;
   const initHash = initSearch.get('data');
+  const history = useHistory();
   const [isLoading, setIsLoading] = useState(true);
   const [searchResult, setSearchResult] = useState();
   const [anatomicalTerms, setAnatomicalTerms] = useState([]);
   const [anatomicalTermsProps, setAnatomicalTermsProps] = useState({});
+  const [dataType, setDataTypes] = useState(initDataType);
+  const dataTypeKey = 'data_type';
+  const dataTypeExpr = useQuery(dataTypeKey);
+
+  // In order to disable the search button if the search has already been made
+  const formSearchButtonIsDisabled = useMemo(() => {
+    const oldDataType = (
+      dataTypeExpr?.split(',') || DATA_TYPES.map((d) => d.key)
+    ).sort();
+
+    return (
+      JSON.stringify(dataType.sort()) === JSON.stringify(oldDataType)
+    );
+  }, [dataType, dataTypeExpr]);
 
   const getSearchParams = () => {
     const params = {
@@ -79,7 +70,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
       isFirstSearch: true,
       initSearch,
       pageType: EXPR_CALLS,
-      dataType: ALL_DATA_TYPES_ID,
+      dataType,
       selectedExpOrAssay: [],
       selectedSpecies: speciesId,
       selectedGene: geneId ? [geneId] : [],
@@ -88,8 +79,8 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
       selectedStrain: [],
       selectedDevStages: [],
       selectedSexes: ['all'],
-      hasCellTypeSubStructure: 0,
-      hasDevStageSubStructure: 0,
+      // hasCellTypeSubStructure: 0,
+      // hasDevStageSubStructure: 0,
       hasTissueSubStructure: 0,
     };
 
@@ -284,28 +275,33 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
     triggerInitialSearch(params);
   }, [geneId, speciesId]);
 
-// Perform API data request for subordinate terms
-const triggerSearchChildren = async (
-  parentId, selectedTissueId
-) => {
-  // DEBUG: remove console log in prod
-  console.log(`[GeneExpressionGraph] triggerSearchChildren:\n${parentId}`);
+  useEffect(() => {
+    const params = getSearchParams();
+    triggerInitialSearch(params);
+  }, [dataType]);
 
-  const params = getSearchParams();
-  params.isFirstSearch = false;    
-  // Set parent anatomical term as selected tissue
-  params.selectedTissue = [selectedTissueId];
-  // Fix other condition params to top-level terms (overrides form fields!)
-  params.hasTissueSubStructure = 1; // we want children of parent term!
-  params.limit = BASE_LIMIT;
-  params.conditionalParam2 = ['anat_entity']; // restrict to anatomical terms
-  params.condObserved = 1;
- 
-  setIsLoading(true);
-  // DEBUG: remove console log in prod
-  console.log(`[GeneExpressionGraph] triggerSearchChildren - triggered!`);
-  console.log(`[GeneExpressionGraph] triggerSearchChildren - params:\n${JSON.stringify(params)}`);
-  return api.search.geneExpressionMatrix
+  // Perform API data request for subordinate terms
+  const triggerSearchChildren = async (
+    parentId, selectedTissueId
+  ) => {
+    // DEBUG: remove console log in prod
+    console.log(`[GeneExpressionGraph] triggerSearchChildren:\n${parentId}`);
+
+    const params = getSearchParams();
+    params.isFirstSearch = false;    
+    // Set parent anatomical term as selected tissue
+    params.selectedTissue = [selectedTissueId];
+    // Fix other condition params to top-level terms (overrides form fields!)
+    params.hasTissueSubStructure = 1; // we want children of parent term!
+    params.limit = BASE_LIMIT;
+    params.conditionalParam2 = ['anat_entity']; // restrict to anatomical terms
+    params.condObserved = 1;
+  
+    setIsLoading(true);
+    // DEBUG: remove console log in prod
+    console.log(`[GeneExpressionGraph] triggerSearchChildren - triggered!`);
+    console.log(`[GeneExpressionGraph] triggerSearchChildren - params:\n${JSON.stringify(params)}`);
+    return api.search.geneExpressionMatrix
     .search(params, false)
     .then(({ resp, paramsURLCalled }) => {
       // DEBUG: remove in prod
@@ -550,6 +546,71 @@ const triggerSearchChildren = async (
             80%
           </progress>
         )}
+
+        <div className="is-flex is-flex-wrap-wrap gene-expr-fields-wrapper mt-2">
+          {DATA_TYPES.map((c) => (
+            <label
+              className="checkbox ml-2 is-size-7 is-flex is-align-items-center"
+              key={c.key}
+            >
+              <input
+                type="checkbox"
+                checked={dataType.find((d) => d === c.key) || false}
+                onChange={(e) => {
+                  setDataTypes((prev) => {
+                    const curr = [...prev];
+                    if (e.target.checked) {
+                      curr.push(c.key);
+                    } else {
+                      const pos = curr.findIndex((d) => d === c.key);
+                      if (pos >= 0) curr.splice(pos, 1);
+                    }
+                    return curr;
+                  });
+                }}
+              />
+              <b className="mx-1">{c.text}</b>
+            </label>
+          ))}
+          <Bulma.Button
+            className="search-form"
+            disabled={
+              JSON.stringify(dataType.sort()) ===
+              JSON.stringify(DATA_TYPES.map((d) => d.key).sort())
+            }
+            onClick={() => setDataTypes(DATA_TYPES.map((d) => d.key))}
+          >
+            Select All
+          </Bulma.Button>
+          <Bulma.Button
+            className="search-form"
+            disabled={dataType.length === 0}
+            onClick={() => setDataTypes([])}
+          >
+            Unselect All
+          </Bulma.Button>
+        </div>
+        <div className="is-flex is-flex-wrap-wrap gene-expr-fields-wrapper mt-2">
+          <Bulma.Button
+            className="search-form"
+            disabled={formSearchButtonIsDisabled}
+            onClick={() => {
+              const queryParams = new URLSearchParams(window.location.search);
+              if (
+                JSON.stringify(dataType.sort()) !==
+                  JSON.stringify(DATA_TYPES.map((d) => d.key).sort()) &&
+                dataType.length > 0
+              )
+                queryParams.set(dataTypeKey, dataType.join(','));
+              else queryParams.delete(dataTypeKey);
+
+              history.replace(`${URL_ROOT}${history.location.pathname}?${queryParams.toString()}`);
+            }}
+          >
+            Update
+          </Bulma.Button>
+        </div>
+
         {!isLoading && searchResult && heatmapData.length > 0 && (
           <Heatmap
             data={heatmapData}
