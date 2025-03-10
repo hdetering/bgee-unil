@@ -374,10 +374,14 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
             </div>
 
             <p>
-              Example:
+              Examples:
               <br />
               <a className="internal-link" href={`${URL_ROOT}/search/expression-matrix?data=43254035c4a47f95a94ce2114c098c1fbd675fe1`}>
-                Olfactory receptor genes (D. melanogaster)
+                Olfactory receptor genes (<i>Drosophila melanogaster</i>)
+              </a>
+              <br />
+              <a className="internal-link" href={`${URL_ROOT}/search/expression-matrix?data=997267a4f376da91865b78014485f9b9ca625ad3`}>
+                Hemoglobin genes (<i>Homo sapiens</i>)
               </a>
             </p>
 
