@@ -590,7 +590,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
             Unselect All
           </Bulma.Button>
         </div>
-        <div className="is-flex is-flex-wrap-wrap gene-expr-fields-wrapper mt-2">
+        <div className="is-flex is-flex-wrap-wrap gene-expr-fields-wrapper mt-2 mb-4">
           <Bulma.Button
             className="search-form"
             disabled={formSearchButtonIsDisabled}

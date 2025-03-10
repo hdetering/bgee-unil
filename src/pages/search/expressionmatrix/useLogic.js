@@ -35,6 +35,7 @@ export const RAW_DATA_ANNOTS = 'raw_data_annots';
 export const PROC_EXPR_VALUES = 'proc_expr_values';
 export const EXPR_CALLS = 'expr_calls';
 
+// TODO: remove?
 export const TAB_PAGE = [
   {
     id: EXPERIMENTS,

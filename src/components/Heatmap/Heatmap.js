@@ -184,41 +184,48 @@ const Heatmap = ({
     document.body.removeChild(downloadLink);
   };
 
-  
+  const downloadPng = () => {
+    const svgElement = svgRef.current;
+    if (!svgElement) return;
+
+    // Create a Blob from the SVG
+    const serializer = new XMLSerializer();
+    const svgString = serializer.serializeToString(svgElement);
+    const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+    const svgUrl = URL.createObjectURL(svgBlob);
+
+    // Create an Image object to load the SVG
+    const img = new Image();
+    img.onload = () => {
+      // Create a canvas with the same dimensions
+      const canvas = document.createElement('canvas');
+      canvas.width = svgElement.width.baseVal.value;
+      canvas.height = svgElement.height.baseVal.value;
+
+      // Draw the image onto the canvas
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+
+      // Convert canvas to PNG and trigger download
+      canvas.toBlob((blob) => {
+        const pngUrl = URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = pngUrl;
+        downloadLink.download = 'Bgee-genex-heatmap.png';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(pngUrl);
+      }, 'image/png');
+    };
+    img.src = svgUrl;
+  };
 
   return (
     <>
       <div style={{ position: "relative", backgroundColor: bgColor }}>
-
-      <div className="my-2 is-flex is-justify-content-flex-end">
-        <Bulma.Button
-          className="download-btn is-small"
-          onClick={downloadTsv}
-          renderAs="a"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Download data as TSV
-          <span className="icon is-small ml-1">
-            <ion-icon name="download-outline" />
-          </span>
-        </Bulma.Button>
-      </div>
-
-      <div className="my-2 is-flex is-justify-content-flex-end">
-        <Bulma.Button
-          className="download-btn is-small"
-          onClick={downloadSvg}
-          renderAs="a"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Export current plot as SVG
-          <span className="icon is-small ml-1">
-            <ion-icon name="download-outline" />
-          </span>
-        </Bulma.Button>
-      </div>
 
       <div className="columns">
       <div className="column">
@@ -267,7 +274,62 @@ const Heatmap = ({
       </div>
       </div>
     </div>
-      
+
+    <div className="card"
+      style={{
+        position: 'relative',
+        zIndex: 1,
+      }}
+    >
+      <header className="card-header">
+        <p className="card-header-title">
+          Download
+          <span style={{ marginLeft: "10px" }} />
+          <div className="is-flex is-justify-content-flex-end">
+            <Bulma.Button
+              className="download-btn is-small mr-2"
+              onClick={downloadPng}
+              renderAs="a"
+              target="_blank"
+              rel="noreferrer"
+            >
+              PNG
+              <span className="icon is-small ml-1">
+                <ion-icon name="download-outline" />
+              </span>
+            </Bulma.Button>
+
+            <Bulma.Button
+              className="download-btn is-small mr-2"
+              onClick={downloadSvg}
+              renderAs="a"
+              target="_blank"
+              rel="noreferrer"
+            >
+              SVG
+              <span className="icon is-small ml-1">
+                <ion-icon name="download-outline" />
+              </span>
+            </Bulma.Button>
+
+            <Bulma.Button
+              className="download-btn is-small mr-2"
+              onClick={downloadTsv}
+              renderAs="a"
+              target="_blank"
+              rel="noreferrer"
+            >
+              TSV
+              <span className="icon is-small ml-1">
+                <ion-icon name="download-outline" />
+              </span>
+            </Bulma.Button>
+
+          </div>
+        </p>
+      </header>
+    </div>
+
     <div className="card"
       style={{
         position: 'relative',

@@ -242,24 +242,6 @@ const GeneExpressionMatrixResults = ({
 
   return (
     <>
-      {false && (results?.length > 0) && (
-      <div className="my-2 is-flex is-justify-content-flex-end">
-          <Bulma.Button
-            className="download-btn is-small"
-            href={buildTSVhref}
-            renderAs="a"
-            download={`Bgee-${pageType}.tsv`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Export data in TSV
-            <span className="icon is-small ml-1">
-              <ion-icon name="download-outline" />
-            </span>
-          </Bulma.Button>
-        </div>
-      )}
-
       {results?.length > 0 ? (
       <Heatmap
         data = {heatmapData}
