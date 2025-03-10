@@ -209,6 +209,18 @@ const Species = () => {
           <div className="is-flex">
             <div style={{ width: 150 }}>
               <p>
+                <b style={{ width: 140 }}>Intergenic</b>
+              </p>
+            </div>
+            <div>
+              <LinkExternal to={`${config.ftpDomain}/intergenic/ref_intergenic/`}>
+                Reference intergenic data for {data.species.genus} {data.species.speciesName}
+              </LinkExternal>
+            </div>
+          </div>
+          <div className="is-flex">
+            <div style={{ width: 150 }}>
+              <p>
                 <b style={{ width: 140 }}>Gene list</b>
               </p>
             </div>
