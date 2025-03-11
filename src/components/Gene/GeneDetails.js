@@ -7,7 +7,8 @@ import PATHS from '../../routes/paths';
 import api from '../../api';
 import GeneSearch from './GeneSearch';
 import GeneExpandableList from './GeneExpandableList';
-import GeneExpression from './GeneExpression';
+import GeneExpressionGraph from './GeneExpressionGraph';
+import GeneExpressionTable from './GeneExpressionTable';
 import GeneHomologs from './GeneHomologs';
 import GeneXRefs from './GeneXRefs';
 import schemaDotOrg from '../../helpers/schemaDotOrg';
@@ -142,7 +143,7 @@ const GeneDetails = ({
             <Bulma.Title size={4} className="gradient-underline" renderAs="h2">
               General information
             </Bulma.Title>
-            <div className=" near-columns">
+            <div className="near-columns">
               <Bulma.Columns className="my-0">
                 <Bulma.C size={3}>
                   <p className="has-text-weight-semibold">Gene identifier</p>
@@ -240,8 +241,10 @@ const GeneDetails = ({
               </Bulma.Columns>
             </div>
           </div>
-          <GeneExpression geneId={geneId} speciesId={species.id} />
-          <GeneExpression geneId={geneId} speciesId={species.id} notExpressed />
+
+          <GeneExpressionGraph geneId={geneId} speciesId={species.id} />
+          <GeneExpressionTable geneId={geneId} speciesId={species.id} />
+          <GeneExpressionTable geneId={geneId} speciesId={species.id} notExpressed />
           <GeneHomologs
             homologs={homologs}
             geneId={geneId}

@@ -94,11 +94,6 @@ export const Renderer = forwardRef(({
     return orderedLabels;
   }
 
-  // sort x-axis labels alphabetically
-  const xLabels = useMemo(() => [...new Set(dataShow.map((d) => d.x))], [dataShow]);
-  const xLabelsOrdered = xLabels.sort((a, b) => a.localeCompare(b));
-
-  // sort y-axis labels hierarchically  
   const drilldownCopy = JSON.parse(JSON.stringify(drilldown));
   const yTermsOrdered = orderLabelsHierarchically(drilldownCopy);
   console.log(`[Renderer] yTerms:\n${JSON.stringify(yTerms)}`);
@@ -110,7 +105,7 @@ export const Renderer = forwardRef(({
   
 
   // const allYGroups = useMemo(() => [...new Set(dataShow.map((d) => d.y))], [dataShow]);
-  const allXGroups = xLabelsOrdered;
+  const allXGroups = useMemo(() => [...new Set(dataShow.map((d) => d.x))], [dataShow]);
   // const allYGroups = useMemo(() => [...new Set(yLblOrdered.map((d) => d.label))], [yLblOrdered]);
   const allYGroups = useMemo(() => [...new Set(yLblOrdered.map((d) => d.id))], [yLblOrdered]);
 
@@ -142,6 +137,9 @@ export const Renderer = forwardRef(({
     }
     const idx = i;
     const fillColour = d.isExpressed ? colorScale(d.value) : '#cccccc';
+    if (!termProps[d.termId]) {
+      console.log(`[Renderer] termProps[${d.termId}] not found`);
+    }
     const strokeColour = termProps[d.termId].isTopLevelTerm ? colorScale(d.maxExp) : fillColour;
     const cellData = {
       geneId: d.geneId,
@@ -160,7 +158,7 @@ export const Renderer = forwardRef(({
       yPos: y + xScale.bandwidth() / 2 + MARGIN.bottom,
       value: Math.round(d.value * 100) / 100,
       isExpressed: d.isExpressed,
-      maxExpScore: d.maxExp.toFixed(2),
+      // maxExpScore: d.maxExp.toFixed(2),
       hasDataAffy: d.hasDataAffy,
       hasDataEst: d.hasDataEst,
       hasDataInSitu: d.hasDataInSitu,
@@ -349,7 +347,7 @@ export const Renderer = forwardRef(({
                 yLabel: `${d.termId} - ${d.termName}`,
                 value: Math.round(d.value * 100) / 100,
                 isExpressed: d.isExpressed,
-                maxExpScore: d.maxExp.toFixed(2),
+                // maxExpScore: d.maxExp.toFixed(2),
                 clientX: e.clientX + 10,
                 clientY: e.clientY - 10
               });

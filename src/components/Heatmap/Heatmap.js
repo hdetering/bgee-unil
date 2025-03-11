@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import * as d3 from "d3";
-import Bulma from '../../../../../components/Bulma';
+import Bulma from '../Bulma';
 import { Renderer } from "./Renderer";
 import { Tooltip } from "./Tooltip";
 import { DetailView } from "./DetailView";
@@ -8,7 +8,7 @@ import { COLORS, THRESHOLDS, COLOR_LEGEND_HEIGHT } from "./constants";
 
 const SHOW_DEBUG_OPTIONS = false;
 
-export const Heatmap = ({ 
+const Heatmap = ({ 
   width, 
   height = 800,
   backgroundColor,
@@ -24,7 +24,7 @@ export const Heatmap = ({
   const [hoveredCell, setHoveredCell] = useState(null);
   const [clickedCell, setClickedCell] = useState(null);
   const [showLegend, setShowLegend] = useState(true);
-  const [xLabelRotation, setXLabelRotation] = useState(340);
+  const [xLabelRotation, setXLabelRotation] = useState(0);
   const [yLabelAlign, setYLabelAlign] = useState(yLabelJustify);
   const [graphWidth, setGraphWidth] = useState(width);
   const [graphHeight, setGraphHeight] = useState(height);
