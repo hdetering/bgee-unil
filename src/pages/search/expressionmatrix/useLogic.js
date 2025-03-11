@@ -170,14 +170,11 @@ const useLogic = (isExprCalls) => {
 
   const initDataType = initSearch.get('data_type') || DATA_TYPES[0].id;
   const initDataTypeExpCalls = initSearch.getAll('data_type') || ALL_DATA_TYPES_ID;
-  const initPageType = initSearch.get('pageType') || EXPERIMENTS;
   const initSpecies = initSearch.getAll('species') || EMPTY_SPECIES_VALUE.value;
 
   // Page Type / Data Type
   // Page type = data in search params !
-  const [pageType, setPageType] = useState(
-    isExprCalls ? EXPR_CALLS : initPageType
-  );
+  const pageType = EXPR_CALLS;
   const [dataType, setDataType] = useState(initDataType);
   const [dataTypesExpCalls, setDataTypesExpCalls] =
     useState(initDataTypeExpCalls);
@@ -427,7 +424,6 @@ const useLogic = (isExprCalls) => {
       setIsFirstSearch(true);
       setDataType(initDataType);
       setDataTypesExpCalls(initDataTypeExpCalls);
-      setPageType(isExprCalls ? EXPR_CALLS : initPageType);
 
       setIsFirstSearch(false);
       setLocalCount({});
@@ -481,15 +477,6 @@ const useLogic = (isExprCalls) => {
       triggerSearch(false);
     }
   }, [dataType]);
-
-  // TODO: remove pageType and associated useEffect
-  useEffect(() => {
-    if (!isFirstSearch) {
-      setLocalCount({});
-      triggerSearch(true);
-      triggerCounts();
-    }
-  }, [pageType]);
 
   useEffect(() => {
     if (selectedSpecies.value !== EMPTY_SPECIES_VALUE.value && !isInitializingFromUrl) {
@@ -1716,7 +1703,6 @@ const useLogic = (isExprCalls) => {
     filters,
     localCount,
     isCountLoading,
-    pageType,
     dataTypesExpCalls,
     dataQuality,
     conditionalParam2,
@@ -1729,7 +1715,6 @@ const useLogic = (isExprCalls) => {
     setConditionalParam2,
     setDataQuality,
     setDataTypesExpCalls,
-    setPageType,
     setFilters,
     setIsLoading,
     onChangeSpecies,

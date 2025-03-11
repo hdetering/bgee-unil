@@ -27,7 +27,6 @@ const replaceNAOrUndefined = (txt) => {
 const GeneExpressionMatrixResults = ({
   results = [],
   columnDescriptions = [], // for TSV download
-  pageType,
   searchParams,
   triggerSearch,
   triggerHomologSearch,
