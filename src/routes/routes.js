@@ -1,4 +1,3 @@
-import React from 'react';
 import PATHS from './paths';
 
 import Home from '../pages/Home';
@@ -131,7 +130,7 @@ const SEARCH = {
   },
   [PATHS.SEARCH.EXPRESSION_MATRIX]: {
     component: () => <GeneExpressionMatrix isExprCalls />,
-    title: 'Gene expression matrix',
+    title: 'Gene expression matrix (beta)',
   },
   [PATHS.SEARCH.EXPERIMENT]: {
     component: Experiment,

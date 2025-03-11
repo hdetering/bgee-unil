@@ -209,6 +209,18 @@ const Species = () => {
           <div className="is-flex">
             <div style={{ width: 150 }}>
               <p>
+                <b style={{ width: 140 }}>Intergenic</b>
+              </p>
+            </div>
+            <div>
+              <LinkExternal to={`${config.ftpDomain}/intergenic/ref_intergenic/`}>
+                Reference intergenic data for {data.species.genus} {data.species.speciesName}
+              </LinkExternal>
+            </div>
+          </div>
+          <div className="is-flex">
+            <div style={{ width: 150 }}>
+              <p>
                 <b style={{ width: 140 }}>Gene list</b>
               </p>
             </div>
@@ -420,7 +432,7 @@ const Species = () => {
           <div className="mt-2">
             <p
               className="is-size-5 has-text-primary has-text-weight-semibold"
-              id="proc-values-scrna-seq"
+              id="proc-values-fl-scrna-seq"
             >
               {FULL_LENGTH_LABEL}
             </p>
@@ -471,7 +483,7 @@ const Species = () => {
           <div className="mt-2">
             <p
               className="is-size-5 has-text-primary has-text-weight-semibold"
-              id="proc-values-scrna-seq"
+              id="proc-values-db-scrna-seq"
             >
               {DROPLET_BASED_LABEL}
             </p>
