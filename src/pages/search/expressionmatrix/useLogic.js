@@ -170,7 +170,6 @@ const useLogic = (isExprCalls) => {
 
   const initDataType = initSearch.get('data_type') || DATA_TYPES[0].id;
   const initDataTypeExpCalls = initSearch.getAll('data_type') || ALL_DATA_TYPES_ID;
-  const initSpecies = initSearch.getAll('species') || EMPTY_SPECIES_VALUE.value;
 
   // Page Type / Data Type
   // Page type = data in search params !
@@ -234,7 +233,7 @@ const useLogic = (isExprCalls) => {
   // HD: howto keep state about anatomical hierarchy?
   const [anatomicalTerms, setAnatomicalTerms] = useState([]);
   const [anatomicalTermsProps, setAnatomicalTermsProps] = useState({});
-  
+
   // flatten anatomical terms' props
   useEffect(() => {
     const newAnatTermsProps = {}
@@ -291,7 +290,7 @@ const useLogic = (isExprCalls) => {
           isSingleCell: termIsSingleCell,
         }
 
-        if (termId !== ROOT_TERM_ANAT_ENTITY) {  
+        if (termId !== ROOT_TERM_ANAT_ENTITY) {
           parents[termId] = [ROOT_TERM_ANAT_ENTITY];
           children[ROOT_TERM_ANAT_ENTITY].push(termId);
         }
@@ -326,19 +325,19 @@ const useLogic = (isExprCalls) => {
         isTopLevelTerm: true,
         isExpanded: depth === 0,
         isPopulated: true,
-        hasBeenQueried: depth === 0, 
+        hasBeenQueried: depth === 0,
         isSingleCell: term.isSingleCell,
         children: []
       };
-    
+
       // If the term has children, recursively create their nested structure
       if (children[termId]) {
         nestedTerm.children = children[termId].map(childId => createNestedStructure(childId, depth+1));
       }
-    
+
       return nestedTerm;
     }
-    
+
     // Create the nested structure for each root term
     console.log(`[useLogic.prepTermHierarchy] termProps:\n${JSON.stringify(termProps)}`);
     console.log(`[useLogic.prepTermHierarchy] roots:\n${JSON.stringify(roots)}`);
@@ -374,7 +373,7 @@ const useLogic = (isExprCalls) => {
             };
             term.children.push(newChild);
             // Add the new term to termProps
-            newTerms[anatEntity.id] = { 
+            newTerms[anatEntity.id] = {
               label: anatEntity.name,
               isTopLevel: false };
           }
@@ -384,7 +383,7 @@ const useLogic = (isExprCalls) => {
         term.children.forEach(child => addChildren(child));
       }
     };
-  
+
     // Start the recursive search from each root term in the nested structure
     nestedStructure.forEach(root => addChildren(root, root.depth));
 
@@ -762,7 +761,7 @@ const useLogic = (isExprCalls) => {
   // TODO: factor out repetitive code (between this function and triggerSearch, triggerInitialSearchComplementary)
   const triggerInitialSearch = async (initParams) => {
     const params = initParams || getSearchParams();
-    
+
     console.log(`[useLogic.triggerInitialSearch] selected gene:\n${JSON.stringify(params.selectedGene)}`);
     console.log(`[useLogic.triggerInitialSearch] selected species:\n${JSON.stringify(params.selectedSpecies)}`);
     console.log(`[useLogic.triggerInitialSearch] params:\n${JSON.stringify(params)}`);
@@ -778,7 +777,7 @@ const useLogic = (isExprCalls) => {
 
       const { resp: resp1, paramsURLCalled: paramsURLCalled1 } = result1;
       const { resp: resp2 } = result2;
-      
+
       if (resp1.code === 200 && resp2.code === 200) {
         console.log(JSON.stringify(resp1));
         console.log(JSON.stringify(resp2));
@@ -788,9 +787,9 @@ const useLogic = (isExprCalls) => {
         setAnatomicalTerms(anatTerms);
         console.log(`[useLogic.triggerInitialSearch] termProps:\n${JSON.stringify(termProps)}`);
         const newTermProps = addLowLevelTerms(
-          ROOT_TERM_ANAT_ENTITY, 
-          anatTerms, 
-          termProps, 
+          ROOT_TERM_ANAT_ENTITY,
+          anatTerms,
+          termProps,
           resp2.data.expressionData.expressionCalls
         );
         Object.assign(termProps, newTermProps);
@@ -860,7 +859,7 @@ const useLogic = (isExprCalls) => {
             pathname: `${URL_ROOT}${loc.pathname}`,
           });
         }
-        
+
         if (!isFirstSearch) {
           setShow(false);
         }
@@ -891,7 +890,7 @@ const useLogic = (isExprCalls) => {
       const homologCalls = [];
       api.search.genes.homologs(geneId, speciesId).then(async (result) => {
         console.log(`[useLogic.triggerSearch] homologs:\n${JSON.stringify(result.data)}`);
-        
+
         // collect homologous genes
         result.data.orthologsByTaxon.forEach((entry) => {
           entry.genes.forEach(async (gene) => {
@@ -933,7 +932,7 @@ const useLogic = (isExprCalls) => {
       params.filters = {};
       setFilters({});
     }
-    
+
     // HD: if only one gene was selected -> get gene homologs
     console.log(`[useLogic.triggerSearch] selected gene:\n${JSON.stringify(params.selectedGene)}`);
     console.log(`[useLogic.triggerSearch] selected species:\n${JSON.stringify(params.selectedSpecies)}`);
@@ -943,7 +942,7 @@ const useLogic = (isExprCalls) => {
       const speciesId = params.selectedSpecies;
       api.search.genes.homologs(geneId, speciesId).then((result) => {
         console.log(`[useLogic.triggerSearch] homologs:\n${JSON.stringify(result.data)}`);
-        
+
         // collect homologous genes
         result.data.orthologsByTaxon.forEach((entry) => {
           entry.genes.forEach((gene) => {
@@ -961,7 +960,7 @@ const useLogic = (isExprCalls) => {
         // params.queryGenes = queryGenes;
       })
     }
-    
+
     // HD: Fix other condition params to top-level terms (overrides form fields!)
     params.selectedCellTypes = ['GO:0005575']; // "cellular_component"
     params.selectedDevStages = ['UBERON:0000104']; // "life cycle"
@@ -1087,7 +1086,7 @@ const useLogic = (isExprCalls) => {
     console.log(`[useLogic] triggerSearchChildren:\n${parentId}`);
 
     const params = getSearchParams();
-    
+
     // Set parent anatomical term as selected tissue
     params.selectedTissue = [selectedTissueId];
     // Fix other condition params to top-level terms (overrides form fields!)
@@ -1205,7 +1204,7 @@ const useLogic = (isExprCalls) => {
           // Helper function to recursively traverse the array
           function traverse(node) {
             if (!node || !Array.isArray(node)) return []; // break condition
-        
+
             // Add property to each element in the current level
             return node.map(item => {
               const newItem = { ...item };
@@ -1263,7 +1262,7 @@ const useLogic = (isExprCalls) => {
           });
           setAnatomicalTermsProps(newAnatTermsProps);
         }
-        
+
         // add additional data to previous ones
         const exprData = searchResult;
         exprData.expressionData.expressionCalls.push(...resp?.data.expressionData.expressionCalls);
@@ -1398,11 +1397,11 @@ const useLogic = (isExprCalls) => {
 
     try {
       setIsInitializingFromUrl(true);
-      
+
       const resp1 = await api.search.geneExpressionMatrix.getRequestParams(params, false);
       if (resp1.resp.code === 200) {
         console.log(`[useLogic.initFromUrlParams] simple RP resp:\n${JSON.stringify(resp1, null, 2)}`);
-        
+
         const simpleParams = resp1.resp.requestParameters;
         const searchParamsNew = new URLSearchParams();
 
@@ -1426,7 +1425,7 @@ const useLogic = (isExprCalls) => {
           }
         });
         params.initSearch = searchParamsNew;
-        
+
         // Step 2: get detailed request parameters
         const resp2 = await api.search.geneExpressionMatrix.getRequestParams(params, true);
         if (resp2.resp.code === 200) {
@@ -1496,8 +1495,8 @@ const useLogic = (isExprCalls) => {
 
   // Modify search trigger effect to include gene list processing state
   useEffect(() => {
-    if ((isInitializingFromUrl || isProcessingGeneList) && 
-        selectedGene.length > 0 && 
+    if ((isInitializingFromUrl || isProcessingGeneList) &&
+        selectedGene.length > 0 &&
         selectedSpecies.value !== EMPTY_SPECIES_VALUE.value) {
       console.log('[useEffect] States ready for search:', {
         selectedGene,
@@ -1542,7 +1541,7 @@ const useLogic = (isExprCalls) => {
       // Helper function to recursively traverse the array
       function traverse(node) {
         if (!node || !Array.isArray(node)) return []; // break condition
-    
+
         // Add property to each element in the current level
         return node.map(item => {
           const newItem = JSON.parse(JSON.stringify(item)); // { ...item };
@@ -1568,7 +1567,7 @@ const useLogic = (isExprCalls) => {
           return newItem;
         });
       }
-    
+
       // Start traversal from the root
       const newDrilldown = traverse(terms);
       return {newDrilldown, newTermProps};
@@ -1588,9 +1587,6 @@ const useLogic = (isExprCalls) => {
     const {
       requestedSpecies,
       requestedGenes,
-      requestedSpeciesSexes,
-      requestedAnatEntitesAndCellTypes,
-      requestedSpeciesDevStageOntology,
     } = requestDetails;
 
     if (requestedSpecies) {
@@ -1615,21 +1611,21 @@ const useLogic = (isExprCalls) => {
   // Add function to process gene list
   const processGeneList = async (geneListParam) => {
     if (!geneListParam) return;
-    
+
     setIsProcessingGeneList(true);
     const geneIds = geneListParam.split(/[\r\n]+/);
-    
+
     try {
       // Get search results for all genes
       const searchResults = await Promise.all(
-        geneIds.map(geneId => 
+        geneIds.map(geneId =>
           api.search.genes.geneSearchResult(geneId)
         )
       );
 
       // Process results
-      const validResults = searchResults.filter(result => 
-        result.code === 200 && 
+      const validResults = searchResults.filter(result =>
+        result.code === 200 &&
         result.data.result.totalMatchCount === 1
       );
 
@@ -1640,9 +1636,9 @@ const useLogic = (isExprCalls) => {
 
       // Get first gene's species
       const firstSpecies = validResults[0].data.result.geneMatches[0].gene.species;
-      
+
       // Verify all genes are from same species
-      const allSameSpecies = validResults.every(result => 
+      const allSameSpecies = validResults.every(result =>
         result.data.result.geneMatches[0].gene.species.id === firstSpecies.id
       );
 
@@ -1656,7 +1652,7 @@ const useLogic = (isExprCalls) => {
         label: getSpeciesLabel(firstSpecies),
         value: firstSpecies.id
       };
-      
+
       // Set genes
       const genes = validResults.map(result => {
         const { gene } = result.data.result.geneMatches[0];
