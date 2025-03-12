@@ -123,7 +123,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
           isSingleCell: termIsSingleCell,
         }
 
-        if (termId !== ROOT_TERM_ANAT_ENTITY) {  
+        if (termId !== ROOT_TERM_ANAT_ENTITY) {
           parents[termId] = [ROOT_TERM_ANAT_ENTITY];
           children[ROOT_TERM_ANAT_ENTITY].push(termId);
         }
@@ -152,19 +152,19 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
         isTopLevelTerm: true,
         isExpanded: depth === 0,
         isPopulated: true,
-        hasBeenQueried: depth === 0, 
+        hasBeenQueried: depth === 0,
         isSingleCell: term.isSingleCell,
         children: []
       };
-    
+
       // If the term has children, recursively create their nested structure
       if (children[termId]) {
         nestedTerm.children = children[termId].map(childId => createNestedStructure(childId, depth+1));
       }
-    
+
       return nestedTerm;
     }
-    
+
     // Create the nested structure for each root term
     console.log(`[GeneExpressionGraph.prepTermHierarchy] termProps:\n${JSON.stringify(termProps)}`);
     console.log(`[GeneExpressionGraph.prepTermHierarchy] roots:\n${JSON.stringify(roots)}`);
@@ -202,7 +202,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
             };
             term.children.push(newChild);
             // Add the new term to termProps
-            newTerms[termId] = { 
+            newTerms[termId] = {
               label: termLabel,
               isTopLevel: false };
           }
@@ -212,14 +212,14 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
         term.children.forEach(child => addChildren(child));
       }
     };
-  
+
     // Start the recursive search from each root term in the nested structure
     nestedStructure.forEach(root => addChildren(root, root.depth));
 
     // Return the updated termProps
     return newTerms;
   };
-  
+
   const triggerInitialSearch = async () => {
     const params = getSearchParams();
 
@@ -236,9 +236,9 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
         api.search.geneExpressionMatrix.initialSearchComplementary(params)
       ]);
 
-      const { resp: resp1, paramsURLCalled: paramsURLCalled1 } = result1;
+      const { resp: resp1 } = result1;
       const { resp: resp2 } = result2;
-      
+
       if (resp1.code === 200 && resp2.code === 200) {
         console.log(JSON.stringify(resp1));
         console.log(JSON.stringify(resp2));
@@ -248,9 +248,9 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
         setAnatomicalTerms(anatTerms);
         console.log(`[GeneExpressionGraph.triggerInitialSearch] termProps:\n${JSON.stringify(termProps)}`);
         const newTermProps = addLowLevelTerms(
-          ROOT_TERM_ANAT_ENTITY, 
-          anatTerms, 
-          termProps, 
+          ROOT_TERM_ANAT_ENTITY,
+          anatTerms,
+          termProps,
           resp2.data.expressionData.expressionCalls
         );
         Object.assign(termProps, newTermProps);
@@ -288,7 +288,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
     console.log(`[GeneExpressionGraph] triggerSearchChildren:\n${parentId}`);
 
     const params = getSearchParams();
-    params.isFirstSearch = false;    
+    params.isFirstSearch = false;
     // Set parent anatomical term as selected tissue
     params.selectedTissue = [selectedTissueId];
     // Fix other condition params to top-level terms (overrides form fields!)
@@ -296,7 +296,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
     params.limit = BASE_LIMIT;
     params.conditionalParam2 = ['anat_entity']; // restrict to anatomical terms
     params.condObserved = 1;
-  
+
     setIsLoading(true);
     // DEBUG: remove console log in prod
     console.log(`[GeneExpressionGraph] triggerSearchChildren - triggered!`);
@@ -357,12 +357,12 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
           }));
         }
       });
-      
+
       function addChildren(hierarchy, termId, children) {
         // Helper function to recursively traverse the array
         function traverse(node) {
           if (!node || !Array.isArray(node)) return []; // break condition
-      
+
           // Add property to each element in the current level
           return node.map(item => {
             const newItem = { ...item };
@@ -398,7 +398,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
         // Start traversal from the root
         return traverse(hierarchy);
       }
-    
+
       console.log(`[GeneExpressionGraph] triggerSearchChildren newChildTerms:\n${JSON.stringify([...newChildTerms], null, 2)}`);
       if (newChildTerms.size > 0) {
         const newAnatTerms = addChildren(anatomicalTerms, parentId, [...newChildTerms]);
@@ -429,7 +429,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
         console.log(`[GeneExpressionGraph] triggerSearchChildren newAnatTermsProps:\n${JSON.stringify(newAnatTermsProps)}`);
         setAnatomicalTermsProps(newAnatTermsProps);
       }
-        
+
       // add additional data to previous ones
       const exprData = searchResult;
       exprData.expressionData.expressionCalls.push(...resp?.data.expressionData.expressionCalls);
@@ -453,7 +453,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
       // Helper function to recursively traverse the array
       function traverse(node) {
         if (!node || !Array.isArray(node)) return []; // break condition
-    
+
         // Add property to each element in the current level
         return node.map(item => {
           const newItem = JSON.parse(JSON.stringify(item)); // { ...item };
@@ -479,7 +479,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
           return newItem;
         });
       }
-    
+
       // Start traversal from the root
       const newDrilldown = traverse(terms);
       return {newDrilldown, newTermProps};
@@ -502,7 +502,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
     const termName = cellTypeId !== 'GO:0005575' ? `${anatEntityName} : ${cellTypeName}` : anatEntityName;
     const expScore = result.expressionScore.expressionScore;
     const isExpressed = result.expressionState === 'expressed';
-  
+
     return {
       x: gName,
       y: termId,

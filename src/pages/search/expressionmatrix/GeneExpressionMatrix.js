@@ -2,7 +2,6 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
 import Button from '../../../components/Bulma/Button/Button';
 import './rawDataAnnotations.scss';
@@ -10,8 +9,6 @@ import './rawDataAnnotations.scss';
 import DevelopmentalAndLifeStages from './components/filters/DevelopmentalAndLifeStages/DevelopmentalAndLifeStages';
 import Species from './components/filters/Species/Species';
 import useLogic, {
-  DATA_TYPES,
-  TAB_PAGE,
   TAB_PAGE_EXPR_CALL,
 } from './useLogic';
 import CellTypes from './components/filters/CellTypes';
@@ -19,10 +16,7 @@ import Tissues from './components/filters/Tissues/Tissues';
 import Sex from './components/filters/Sex/Sex';
 import Strain from './components/filters/Strain/Strain';
 import Gene from './components/filters/Gene/Gene';
-import ExperimentOrAssay from './components/filters/ExperimentOrAssay/ExperimentOrAssay';
-import RawDataAnnotationsFilters from './RawDataAnnotationsFilters';
 import DataType from './components/filters/DataType/DataType';
-import ResultTabs from './components/ResultTabs';
 import DataQualityParameter from './components/filters/DataQualityParameter';
 import CallType from './components/filters/CallType';
 import config from '../../../config.json';
@@ -39,8 +33,6 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
     anatomicalTerms,
     anatomicalTermsProps,
     maxExpScore,
-    allCounts,
-    localCount,
     dataType,
     show,
     devStages,
@@ -52,13 +44,10 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
     hasCellTypeSubStructure,
     selectedStrain,
     selectedGene,
-    selectedExpOrAssay,
     selectedTissue,
     speciesSexes,
     selectedSexes,
     isLoading,
-    filters,
-    isCountLoading,
     dataTypesExpCalls,
     dataQuality,
     callTypes,
@@ -72,21 +61,16 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
     toggleSex,
     setSelectedStrain,
     setSelectedGene,
-    setSelectedExpOrAssay,
     setHasTissueSubStructure,
     setSelectedDevStages,
     setDevStageSubStructure,
     setHasCellTypeSubStructure,
-    setDataType,
     setShow,
     AutoCompleteByType,
     onSubmit,
     resetForm,
-    setFilters,
-    triggerSearch,
     triggerSearchChildren,
     triggerHomologSearch,
-    triggerCounts,
     addConditionalParam,
     getSearchParams,
     onToggleExpandCollapse,
@@ -95,18 +79,13 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
   // DEBUG: remove console log in prod
   console.log(`[GeneExpressionMatrix] anatomicalTerms:\n${JSON.stringify(anatomicalTerms)}`);
 
-  const loc = useLocation();
-  const [pageIsBrowseResult, setPageIsBrowseResult] = useState(false);
+  const [setPageIsBrowseResult] = useState(false);
   const defaultResults = searchResult?.results?.[dataType] || [];
   const resultExprsCall = searchResult?.expressionData?.expressionCalls || [];
   const results = isExprCalls ? resultExprsCall : defaultResults;
   const defaultColumDesc = searchResult?.columnDescriptions?.[dataType] || [];
   const columnDescExprsCall = searchResult?.columnDescriptions || [];
   const columnsDesc = isExprCalls ? columnDescExprsCall : defaultColumDesc;
-
-  const defaultdataFilters = searchResult?.filters?.[dataType] || {};
-  const dataFiltersExprCall = searchResult?.filters || {};
-  const dataFilters = isExprCalls ? dataFiltersExprCall : defaultdataFilters;
 
   const detailedData = TAB_PAGE_EXPR_CALL;
 
@@ -117,60 +96,6 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
     }
   }, [])
 
-  const parameterFromForm = (() => {
-    // When the user right-click and 'open new' we need to pass only the parameter from the form, not those from the filters
-    const params = getSearchParams();
-    let urlParamsWithoutPageType = '';
-    if (params.dataType) {
-      urlParamsWithoutPageType += `&data_type=${params.dataType}`;
-    }
-    if (params.selectedSpecies) {
-      urlParamsWithoutPageType += `&species_id=${params.selectedSpecies}`;
-    }
-    params.selectedGene.forEach(gene => {
-      urlParamsWithoutPageType += `&gene_id=${gene}`;
-    });
-    params.selectedTissue.forEach(tissue => {
-      urlParamsWithoutPageType += `&anat_entity_id=${tissue}`;
-    });
-    params.selectedCellTypes.forEach(cell => {
-      urlParamsWithoutPageType += `&cell_type_id=${cell}`;
-    });
-    params.selectedDevStages.forEach(stage => {
-      urlParamsWithoutPageType += `&stage_id=${stage}`;
-    });
-    params.selectedStrain.forEach(strain => {
-      urlParamsWithoutPageType += `&strain=${strain}`;
-    });
-    params.selectedExpOrAssay.forEach(expOrAssay => {
-      urlParamsWithoutPageType += `&exp_assay_id=${expOrAssay}`;
-    });
-    params.selectedSexes.forEach(sexe => {
-      urlParamsWithoutPageType += `&sex=${sexe}`;
-    });
-    urlParamsWithoutPageType += `&anat_entity_descendant=${params.hasTissueSubStructure}`;
-    urlParamsWithoutPageType += `&cell_type_descendant=${params.hasCellTypeSubStructure}`;
-    urlParamsWithoutPageType += `&stage_descendant=${params.hasDevStageSubStructure}`;
-
-    return urlParamsWithoutPageType;
-  });
-
-  const parameterInCurrentUrlWithoutPageType = (() => {
-    const params = new URLSearchParams( loc.search );
-    params.delete('pageType');
-    if (params) {
-      return `&${params.toString()}`;
-    }
-    return '';
-  });
-
-  const filterForAllParameter = (() => {
-    if (pageIsBrowseResult) {
-      return "&filters_for_all=1";
-    }
-    return '';
-  });
-
   // TODO: use dedicated styling classes?
   return (
     <>
@@ -180,7 +105,7 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
             {TAB_PAGE_EXPR_CALL.label}
           </h1>
         </div>
-        
+
         <div>
           <h2 className="gradient-underline title is-size-5 has-text-primary">
             {detailedData?.searchLabel}
@@ -278,7 +203,7 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
                 <div className="column">
                   <div>
                     {(selectedGene.length > 0) && (
-                      <> 
+                      <>
                         <DataType
                           dataTypes={dataTypesExpCalls}
                           setDataTypes={setDataTypesExpCalls}
@@ -367,7 +292,7 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
                 />
               </div>
             )}
-            
+
             <GeneExpressionMatrixResults
               results={results}
               columnDescriptions={columnsDesc}

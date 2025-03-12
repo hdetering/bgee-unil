@@ -520,7 +520,7 @@ const search = {
   geneExpressionMatrix: {
     // get request parameters from previous search
     getRequestParams: (form, detailedRP = false) =>
-      new Promise((resolve, reject) => {
+      new Promise((resolve) => {
         // populate request params
         const params = DEFAULT_PARAMETERS('data', 'expr_calls');
         params.append('get_results', '0');
@@ -542,7 +542,7 @@ const search = {
             }
           }
         }
-        
+
         const paramsURLCalled = params.toString();
 
         const typeToken = 'search'; // alternatives: 'count'
@@ -599,7 +599,7 @@ const search = {
           }
           if (form.selectedTissue?.length > 0) {
             // params.append('anat_entity_id', 'UBERON:0001062');
-            form.selectedTissue.forEach((t) => 
+            form.selectedTissue.forEach((t) =>
               params.append('anat_entity_id', t)
             );
           } else {
@@ -611,7 +611,7 @@ const search = {
 
           // NOTE: not using cell types here bc we need to request top level terms first
           // if (form.selectedCellTypes?.length > 0) {
-          //   form.selectedCellTypes.forEach((ct) => 
+          //   form.selectedCellTypes.forEach((ct) =>
           //     params.append('cell_type_id', ct)
           //   );
           // } else {
@@ -626,7 +626,7 @@ const search = {
 
           // NOTE: searching by dev stage only makes sense if we display dev stages
           // if (form.selectedDevStages?.length > 0) {
-          //   form.selectedDevStages.forEach((ds) => 
+          //   form.selectedDevStages.forEach((ds) =>
           //     params.append('stage_id', ds)
           //   );
           //   params.append('cond_param2', 'dev_stage');
@@ -634,16 +634,16 @@ const search = {
 
           // NOTE: searching by strain only makes sense if we display strains
           // if (form.selectedStrain?.length > 0) {
-          //   form.selectedStrain.forEach((s) => 
+          //   form.selectedStrain.forEach((s) =>
           //     params.append('strain', s)
           //   );
           //   params.append('cond_param2', 'strain');
           // }
-          
+
           if (form.selectedSpecies) {
             params.append('species_id', form.selectedSpecies);
           }
-          form.selectedGene.forEach((g) => 
+          form.selectedGene.forEach((g) =>
             params.append('gene_id', g)
           );
           // [...]
@@ -668,7 +668,7 @@ const search = {
           });
 
       }),
-    
+
       initialSearchComplementary: (form) =>
         new Promise((resolve, reject) => {
           // populate request params
@@ -710,14 +710,14 @@ const search = {
             if (form.selectedSpecies) {
               params.append('species_id', form.selectedSpecies);
             }
-            form.selectedGene.forEach((g) => 
+            form.selectedGene.forEach((g) =>
               params.append('gene_id', g)
             );
           }
 
           // [...]
           const paramsURLCalled = params.toString();
-  
+
           const typeToken = 'search'; // alternatives: 'count'
           axiosInstance
             .get(`/?${paramsURLCalled}`, {
@@ -733,7 +733,7 @@ const search = {
               errorHandler(error);
               reject(error?.response || error?.message);
             });
-  
+
         }),
 
     // TODO: remove "isOnlyCounts" param + related code
@@ -799,14 +799,14 @@ const search = {
           }
           form.selectedCellTypes.forEach((ct) =>
             params.append('cell_type_id', ct)
-          );          
-          form.selectedGene.forEach((g) => 
+          );
+          form.selectedGene.forEach((g) =>
             params.append('gene_id', g)
           );
-          form.selectedStrain.forEach((s) => 
+          form.selectedStrain.forEach((s) =>
             params.append('strain', s)
           );
-          form.selectedDevStages.forEach((ds) => 
+          form.selectedDevStages.forEach((ds) =>
             params.append('stage_id', ds)
           );
           form.selectedTissue.forEach((t) =>
@@ -815,7 +815,7 @@ const search = {
           form.selectedExpOrAssay.forEach((exp) =>
             params.append('exp_assay_id', exp)
           );
-          form.selectedSexes.forEach((s) => 
+          form.selectedSexes.forEach((s) =>
             params.append('sex', s)
           );
           if (form.hasTissueSubStructure) {
@@ -827,7 +827,7 @@ const search = {
           if (form.hasDevStageSubStructure) {
             params.append('stage_descendant', '1');
           }
-          
+
           // Search form for Expression calls
           if (form?.dataQuality) {
             params.append('data_qual', form?.dataQuality);
