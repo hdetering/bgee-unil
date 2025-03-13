@@ -253,6 +253,8 @@ export const Heatmap = ({
         showDescMax={showDescMax}
         colorLegendWidth={200}
         colorLegendHeight={COLOR_LEGEND_HEIGHT}
+        setGraphWidth={setGraphWidth}
+        setGraphHeight={setGraphHeight}
       />
 
       <Tooltip

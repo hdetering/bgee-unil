@@ -30,6 +30,9 @@ export const Renderer = forwardRef(({
   showDescMax,
   colorLegendWidth,
   colorLegendHeight,
+  minCellWidth = 20,
+  minCellHeight = 10,
+  setGraphWidth,
 }, ref) => {
   // The bounds (=area inside the axis) is calculated by substracting the margins
   const boundsWidth = width - MARGIN.right - marginLeft;
@@ -177,42 +180,6 @@ export const Renderer = forwardRef(({
     const w1 = cellWidth * (2/3);
     const w2 = cellWidth - w1;
     const x1 = x + w1;
-
-    // return (
-    //   <g id={`heatmapCell-${idx}`}>
-    //     <rect
-    //       key={`valueSelf-${idx}`}
-    //       x={x}
-    //       y={y}
-    //       width={w1}
-    //       height={cellHeight}
-    //       opacity={1}
-    //       fill={fillColour}
-    //       strokeWidth={4}
-    //       onMouseEnter={(e) => {
-    //         setHoveredCell(cellData);
-    //       }}
-    //       onMouseLeave={() => setHoveredCell(null)}
-    //       cursor="pointer"
-    //     />
-
-    //     <rect
-    //       key={`valueDesc-${idx}`}
-    //       x={x1}
-    //       y={y}
-    //       width={w2}
-    //       height={cellHeight}
-    //       opacity={1}
-    //       fill={strokeColour}
-    //       strokeWidth={4}
-    //       onMouseEnter={(e) => {
-    //         setHoveredCell(cellData);
-    //       }}
-    //       onMouseLeave={() => setHoveredCell(null)}
-    //       cursor="pointer"
-    //     />
-    //   </g>     
-    // );
 
     switch(showDescMax) {
       case 'border':
