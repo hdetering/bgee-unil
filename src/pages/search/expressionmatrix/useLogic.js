@@ -1124,11 +1124,6 @@ const useLogic = (isExprCalls) => {
           if (searchParams.get('anat_entity_descendant') === 'true') {
             searchParams.delete('anat_entity_descendant');
           }
-
-          // history.push({
-          //   search: searchParams.toString(),
-          //   pathname: `${URL_ROOT}${loc.pathname}`,
-          // });
         }
 
         // update anatomical terms
