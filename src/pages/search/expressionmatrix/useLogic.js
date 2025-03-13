@@ -442,13 +442,6 @@ const useLogic = (isExprCalls) => {
   */
 
   useEffect(() => {
-    if (!isFirstSearch && !isExprCalls) {
-      setLocalCount({});
-      triggerSearch(false);
-    }
-  }, [dataType]);
-
-  useEffect(() => {
     if (selectedSpecies.value !== EMPTY_SPECIES_VALUE.value && !isInitializingFromUrl) {
       getSexesAndDevStageForSpecies();
       resetForm(true, false);  // Don't preserve genes for user interactions
@@ -1259,34 +1252,6 @@ const useLogic = (isExprCalls) => {
       });
   };
 
-  const triggerCounts = async (
-    cleanFilters = false,
-    bypassInitSearchParam = false
-  ) => {
-    const params = getSearchParams();
-    if (cleanFilters) {
-      params.filters = {};
-      setFilters({});
-    }
-
-    if (!isExprCalls) {
-      setIsCountLoading(true);
-      api.search.rawData
-        .search(params, true, bypassInitSearchParam)
-        .then(({ resp }) => {
-          if (resp.code === 200) {
-            setIsCountLoading(false);
-            setAllCounts(resp?.data?.resultCount);
-          }
-        })
-        .catch(() => {
-          // gene not found or some errors !
-          setIsCountLoading(false);
-          setAllCounts({});
-        });
-    }
-  };
-
   const getSexesAndDevStageForSpecies = () => {
     api.search.species
       .speciesDevelopmentSexe(selectedSpecies.value)
@@ -1533,31 +1498,6 @@ const useLogic = (isExprCalls) => {
     console.log(`[useLogic] DONE onToggleExpandCollapse.`);
   }
 
-  const initializeFromRequestDetails = (requestDetails) => {
-    const {
-      requestedSpecies,
-      requestedGenes,
-    } = requestDetails;
-
-    if (requestedSpecies) {
-      setSelectedSpeciesFromUrl({
-        label: getSpeciesLabel(requestedSpecies),
-        value: requestedSpecies.id,
-      });
-    }
-
-    if (requestedGenes?.length > 0) {
-      setSelectedGene(
-        requestedGenes.map(gene => ({
-          label: getGeneLabel(gene),
-          value: gene.geneId,
-        }))
-      );
-    }
-
-    // ... other initializations
-  };
-
   // Add function to process gene list
   const processGeneList = async (geneListParam) => {
     if (!geneListParam) return;
@@ -1683,11 +1623,9 @@ const useLogic = (isExprCalls) => {
     triggerSearch,
     triggerSearchChildren,
     triggerHomologSearch,
-    triggerCounts,
     addConditionalParam,
     getSearchParams,
     onToggleExpandCollapse,
-    initializeFromRequestDetails,
     processGeneList,
   };
 };
