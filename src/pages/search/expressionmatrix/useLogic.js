@@ -211,15 +211,10 @@ const useLogic = (isExprCalls) => {
 
   // results
   const [isLoading, setIsLoading] = useState(false);
-  const [isCountLoading, setIsCountLoading] = useState(false);
   const [show, setShow] = useState(true);
   const [searchResult, setSearchResult] = useState(null);
   // const [maxExpScore, setMaxExpScore] = useState({});
   const maxExpScore = [];
-  // Store all counts per dataType
-  const [allCounts, setAllCounts] = useState({});
-  // Store only the count of the current DataType ( to match the filters)
-  const [localCount, setLocalCount] = useState({});
 
   // filters
   const [filters, setFilters] = useState({});
@@ -1130,10 +1125,10 @@ const useLogic = (isExprCalls) => {
             searchParams.delete('anat_entity_descendant');
           }
 
-          history.push({
-            search: searchParams.toString(),
-            pathname: `${URL_ROOT}${loc.pathname}`,
-          });
+          // history.push({
+          //   search: searchParams.toString(),
+          //   pathname: `${URL_ROOT}${loc.pathname}`,
+          // });
         }
 
         // update anatomical terms
@@ -1232,11 +1227,6 @@ const useLogic = (isExprCalls) => {
 
         // Finally, we set the values we are interested in
         setIsLoading(false);
-        setLocalCount(
-          isExprCalls
-            ? { assayCount: resp?.data?.expressionCallCount }
-            : resp?.data?.resultCount?.[dataType]
-        );
       })
       /* .catch(() => {
         // DEBUG: remove console log in prod
@@ -1569,7 +1559,6 @@ const useLogic = (isExprCalls) => {
     anatomicalTerms,
     anatomicalTermsProps,
     maxExpScore,
-    allCounts,
     dataType,
     show,
     devStages,
@@ -1587,8 +1576,6 @@ const useLogic = (isExprCalls) => {
     selectedSexes,
     isLoading,
     filters,
-    localCount,
-    isCountLoading,
     dataTypesExpCalls,
     dataQuality,
     conditionalParam2,
