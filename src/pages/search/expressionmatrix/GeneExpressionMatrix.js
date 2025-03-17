@@ -256,11 +256,11 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
           <p>
             Examples:
             <br />
-            <a className="internal-link" href={`${URL_ROOT}/search/expression-matrix?data=43254035c4a47f95a94ce2114c098c1fbd675fe1`}>
+            <a className="internal-link" href={`${URL_ROOT}/search/expression-matrix?species_id=7227&gene_id=FBgn0030298&gene_id=FBgn0030715&gene_id=FBgn0041626&gene_id=FBgn0023523&gene_id=FBgn0030016&gene_id=FBgn0030204`}>
               Olfactory receptor genes (<i>Drosophila melanogaster</i>)
             </a>
             <br />
-            <a className="internal-link" href={`${URL_ROOT}/search/expression-matrix?data=997267a4f376da91865b78014485f9b9ca625ad3`}>
+            <a className="internal-link" href={`${URL_ROOT}/search/expression-matrix?species_id=9606&gene_id=ENSG00000206172&gene_id=ENSG00000188536&gene_id=ENSG00000244734&gene_id=ENSG00000223609&gene_id=ENSG00000213934&gene_id=ENSG00000196565&gene_id=ENSG00000206177&gene_id=ENSG00000130656`}>
               Hemoglobin genes (<i>Homo sapiens</i>)
             </a>
           </p>

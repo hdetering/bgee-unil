@@ -211,24 +211,13 @@ const useLogic = (isExprCalls) => {
 
   // results
   const [isLoading, setIsLoading] = useState(false);
-  const [isCountLoading, setIsCountLoading] = useState(false);
   const [show, setShow] = useState(true);
   const [searchResult, setSearchResult] = useState(null);
   // const [maxExpScore, setMaxExpScore] = useState({});
   const maxExpScore = [];
-  // Store all counts per dataType
-  const [allCounts, setAllCounts] = useState({});
-  // Store only the count of the current DataType ( to match the filters)
-  const [localCount, setLocalCount] = useState({});
 
   // filters
   const [filters, setFilters] = useState({});
-
-  // Will determine if the User clicked on a link to come on Raw-Data page even though he is already on it
-  // The page will reset to it default state
-  const [needToResetThePage, setNeedToResetThePage] = useState(false);
-
-  const [pageCanLoadFirstCount, setPageCanLoadFirstCount] = useState(false);
 
   // HD: howto keep state about anatomical hierarchy?
   const [anatomicalTerms, setAnatomicalTerms] = useState([]);
@@ -417,34 +406,12 @@ const useLogic = (isExprCalls) => {
   }, []);
   */
 
-  useEffect(() => {
-    if (needToResetThePage) {
-      // We set FirstSearch at TRUE so we don't trigger all the useEffect that checks for it
-      setIsFirstSearch(true);
-      setDataType(initDataType);
-      setDataTypesExpCalls(initDataTypeExpCalls);
-
-      setIsFirstSearch(false);
-      setLocalCount({});
-      triggerCounts();
-      triggerSearch(true);
-
-      setNeedToResetThePage(false);
-    }
-  }, [needToResetThePage]);
-
-  useEffect(() => {
-    if (pageCanLoadFirstCount) {
-      triggerCounts(false, true);
-    }
-  }, [pageCanLoadFirstCount])
-
   const updateSelectedSpecies = (newSpecies, preserveGenes = false) => {
     console.log('[GENE_DEBUG] updateSelectedSpecies called with:', {newSpecies, preserveGenes});
     setSelectedSpecies(newSpecies);
     if (newSpecies.value !== EMPTY_SPECIES_VALUE.value) {
       getSexesAndDevStageForSpecies();
-      resetForm(true, false, preserveGenes);  // Pass preserveGenes flag to resetForm
+      resetForm(true, preserveGenes);  // Pass preserveGenes flag to resetForm
     }
   };
 
@@ -469,18 +436,10 @@ const useLogic = (isExprCalls) => {
   }, []);
   */
 
-  // TODO: remove dataType and associated useEffect
-  useEffect(() => {
-    if (!isFirstSearch && !isExprCalls) {
-      setLocalCount({});
-      triggerSearch(false);
-    }
-  }, [dataType]);
-
   useEffect(() => {
     if (selectedSpecies.value !== EMPTY_SPECIES_VALUE.value && !isInitializingFromUrl) {
       getSexesAndDevStageForSpecies();
-      resetForm(true, false, false);  // Don't preserve genes for user interactions
+      resetForm(true, false);  // Don't preserve genes for user interactions
     }
   }, [selectedSpecies]);
 
@@ -691,8 +650,6 @@ const useLogic = (isExprCalls) => {
         setCondObserved(false);
       }
     }
-
-    setPageCanLoadFirstCount(true);
   };
 
   const getSearchParams = () => {
@@ -1167,11 +1124,6 @@ const useLogic = (isExprCalls) => {
           if (searchParams.get('anat_entity_descendant') === 'true') {
             searchParams.delete('anat_entity_descendant');
           }
-
-          history.push({
-            search: searchParams.toString(),
-            pathname: `${URL_ROOT}${loc.pathname}`,
-          });
         }
 
         // update anatomical terms
@@ -1270,11 +1222,6 @@ const useLogic = (isExprCalls) => {
 
         // Finally, we set the values we are interested in
         setIsLoading(false);
-        setLocalCount(
-          isExprCalls
-            ? { assayCount: resp?.data?.expressionCallCount }
-            : resp?.data?.resultCount?.[dataType]
-        );
       })
       /* .catch(() => {
         // DEBUG: remove console log in prod
@@ -1288,34 +1235,6 @@ const useLogic = (isExprCalls) => {
         // --> Filters will now be used for the next requests
         setIsFirstSearch(false);
       });
-  };
-
-  const triggerCounts = async (
-    cleanFilters = false,
-    bypassInitSearchParam = false
-  ) => {
-    const params = getSearchParams();
-    if (cleanFilters) {
-      params.filters = {};
-      setFilters({});
-    }
-
-    if (!isExprCalls) {
-      setIsCountLoading(true);
-      api.search.rawData
-        .search(params, true, bypassInitSearchParam)
-        .then(({ resp }) => {
-          if (resp.code === 200) {
-            setIsCountLoading(false);
-            setAllCounts(resp?.data?.resultCount);
-          }
-        })
-        .catch(() => {
-          // gene not found or some errors !
-          setIsCountLoading(false);
-          setAllCounts({});
-        });
-    }
   };
 
   const getSexesAndDevStageForSpecies = () => {
@@ -1384,7 +1303,7 @@ const useLogic = (isExprCalls) => {
     setSelectedSpecies(species);
     if (species.value !== EMPTY_SPECIES_VALUE.value) {
       getSexesAndDevStageForSpecies();
-      resetForm(true, false, true);  // Always preserve genes during URL init
+      resetForm(true, true);  // Always preserve genes during URL init
     }
   };
 
@@ -1493,24 +1412,8 @@ const useLogic = (isExprCalls) => {
 
   }, [loc.search]);
 
-  // Modify search trigger effect to include gene list processing state
-  useEffect(() => {
-    if ((isInitializingFromUrl || isProcessingGeneList) &&
-        selectedGene.length > 0 &&
-        selectedSpecies.value !== EMPTY_SPECIES_VALUE.value) {
-      console.log('[useEffect] States ready for search:', {
-        selectedGene,
-        selectedSpecies,
-        isInitializingFromUrl,
-        isProcessingGeneList
-      });
-      triggerInitialSearch();
-      setIsInitializingFromUrl(false);
-    }
-  }, [selectedGene, selectedSpecies, isInitializingFromUrl, isProcessingGeneList]);
-
-  const resetForm = (isSpeciesChange = false, pageWillBeReset = false, preserveGenes = false) => {
-    console.log(`[useLogic.resetForm] resetForm called with:`, {isSpeciesChange, pageWillBeReset, preserveGenes});
+  const resetForm = (isSpeciesChange = false, preserveGenes = false) => {
+    console.log(`[useLogic.resetForm] resetForm called with:`, {isSpeciesChange, preserveGenes});
     if (!preserveGenes) {
       console.log(`[useLogic.resetForm] Clearing genes in resetForm`);
       setSelectedGene([]);
@@ -1526,9 +1429,6 @@ const useLogic = (isExprCalls) => {
     if (!isSpeciesChange) {
       setSelectedSpecies(EMPTY_SPECIES_VALUE);
       setSelectedExpOrAssay([]);
-    }
-    if (pageWillBeReset) {
-      setNeedToResetThePage(true);
     }
   };
 
@@ -1582,31 +1482,6 @@ const useLogic = (isExprCalls) => {
     setAnatomicalTerms(newDrilldown);
     console.log(`[useLogic] DONE onToggleExpandCollapse.`);
   }
-
-  const initializeFromRequestDetails = (requestDetails) => {
-    const {
-      requestedSpecies,
-      requestedGenes,
-    } = requestDetails;
-
-    if (requestedSpecies) {
-      setSelectedSpeciesFromUrl({
-        label: getSpeciesLabel(requestedSpecies),
-        value: requestedSpecies.id,
-      });
-    }
-
-    if (requestedGenes?.length > 0) {
-      setSelectedGene(
-        requestedGenes.map(gene => ({
-          label: getGeneLabel(gene),
-          value: gene.geneId,
-        }))
-      );
-    }
-
-    // ... other initializations
-  };
 
   // Add function to process gene list
   const processGeneList = async (geneListParam) => {
@@ -1679,7 +1554,6 @@ const useLogic = (isExprCalls) => {
     anatomicalTerms,
     anatomicalTermsProps,
     maxExpScore,
-    allCounts,
     dataType,
     show,
     devStages,
@@ -1697,8 +1571,6 @@ const useLogic = (isExprCalls) => {
     selectedSexes,
     isLoading,
     filters,
-    localCount,
-    isCountLoading,
     dataTypesExpCalls,
     dataQuality,
     conditionalParam2,
@@ -1733,12 +1605,9 @@ const useLogic = (isExprCalls) => {
     triggerSearch,
     triggerSearchChildren,
     triggerHomologSearch,
-    triggerCounts,
     addConditionalParam,
     getSearchParams,
     onToggleExpandCollapse,
-    initializeFromRequestDetails,
-    isProcessingGeneList,
     processGeneList,
   };
 };

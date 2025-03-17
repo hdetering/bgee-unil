@@ -54,7 +54,7 @@ const TreeNode = ({ node, depth, index, yScale, toggleCollapse, labelFont }) => 
           x={depth * 20}
           y={yPos}
           fontSize="12"
-          {...(hasChildren ? {
+          {...(hasChildren || node.isTopLevelTerm ? {
             onClick: (e) => onToggleClick(e, node),
             style: { cursor: 'pointer' }
           } : {})}

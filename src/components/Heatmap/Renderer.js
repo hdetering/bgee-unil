@@ -30,6 +30,9 @@ export const Renderer = forwardRef(({
   showDescMax,
   colorLegendWidth,
   colorLegendHeight,
+  minCellWidth = 20,
+  minCellHeight = 10,
+  setGraphWidth,
 }, ref) => {
   // The bounds (=area inside the axis) is calculated by substracting the margins
   const boundsWidth = width - MARGIN.right - marginLeft;
@@ -109,28 +112,39 @@ export const Renderer = forwardRef(({
   // const allYGroups = useMemo(() => [...new Set(yLblOrdered.map((d) => d.label))], [yLblOrdered]);
   const allYGroups = useMemo(() => [...new Set(yLblOrdered.map((d) => d.id))], [yLblOrdered]);
 
-  const xScale = useMemo(() => (
-    d3
+  const xScale = useMemo(() => {
+    // Calculate required width based on minimum cell width, including 4px margin
+    const requiredWidth = allXGroups.length * (minCellWidth + 4);
+    if (requiredWidth > boundsWidth) {
+      // Update graph width if needed
+      setGraphWidth(requiredWidth + MARGIN.right + marginLeft);
+    }
+    
+    return d3
       .scaleBand()
-      .range([0, boundsWidth])
+      .range([0, Math.max(boundsWidth, requiredWidth)])
       .domain(allXGroups)
-      .padding(0.01)
-  ), [dataShow, width]);
+      .padding(0.01);
+  }, [dataShow, width, minCellWidth, allXGroups, boundsWidth, marginLeft, setGraphWidth]);
 
-  const yScale = useMemo(() => (
-    d3
+  const yScale = useMemo(() => {
+    // Calculate required height based on minimum cell height, including 4px margin
+    const requiredHeight = allYGroups.length * (minCellHeight + 4);
+    const actualHeight = Math.max(boundsHeight, requiredHeight);
+    
+    return d3
       .scaleBand()
-      .range([0, boundsHeight])
+      .range([0, actualHeight])
       .domain(allYGroups)
-      .padding(0.01)
-  ), [dataShow, height]);
+      .padding(0.01);
+  }, [dataShow, height, minCellHeight, allYGroups, boundsHeight]);
 
   // Build the rectangles
   const allShapes = dataShow.map((d, i) => {
     const x = xScale(d.x);
     const y = yScale(d.y);
-    const cellWidth = xScale.bandwidth()-4;
-    const cellHeight = yScale.bandwidth()-4;
+    const cellWidth = Math.max(xScale.bandwidth()-4, minCellWidth);
+    const cellHeight = Math.max(yScale.bandwidth()-4, minCellHeight);
     
     if (d.value === null || !x || !y) {
       return null;
