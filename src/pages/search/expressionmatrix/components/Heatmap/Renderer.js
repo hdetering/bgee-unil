@@ -469,9 +469,9 @@ export const Renderer = forwardRef(({
     );
   });
 
-  const [min = 0, max = 0] = d3.extent(data.map((d) => d.value)); // extent can return [undefined, undefined], default to [0,0] to fix types
-  console.log(`[Renderer] min: ${min}, max: ${max}`);
-
+  const domain = colorScale.domain();
+  const max = domain[domain.length - 1];
+  
   // create numbers 1..100
   const stopsIdx = Array(101).fill().map((_, index) => index);
   const colorLegendStops = stopsIdx.map((idx) => (

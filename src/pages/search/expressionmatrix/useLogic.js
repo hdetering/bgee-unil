@@ -1432,19 +1432,20 @@ const useLogic = (isExprCalls) => {
     }
   };
 
-  // updates component state!
+  // Expand or collapse a term
   const onToggleExpandCollapse = (term) => {
     console.log(`[useLogic] onToggleExpandCollapse:\n${JSON.stringify(term)}`);
 
     function updateExpandedStateHierarchically(terms) {
       const newTermProps = {...anatomicalTermsProps};
+      
       // Helper function to recursively traverse the array
       function traverse(node) {
         if (!node || !Array.isArray(node)) return []; // break condition
 
         // Add property to each element in the current level
         return node.map(item => {
-          const newItem = JSON.parse(JSON.stringify(item)); // { ...item };
+          const newItem = JSON.parse(JSON.stringify(item));
           if (item.id === term.id) {
             // get data for descendants
             if (!item.hasBeenQueried) {
@@ -1456,14 +1457,13 @@ const useLogic = (isExprCalls) => {
               newTermProps[term.id].isExpanded = true;
             } else {
               console.log(`[useLogic] flipping item.isExpanded from ${item.isExpanded} to ${!item.isExpanded}.`);
-              newItem.isExpanded = !item.isExpanded; // Flip expanded state
-              newItem.isPopulated = item.isPopulated; // Keep populated state
+              newItem.isExpanded = !item.isExpanded;
+              newItem.isPopulated = item.isPopulated;
+              // Update term props
+              newTermProps[term.id].isExpanded = !item.isExpanded;
             }
           }
-          newItem.children = traverse(newItem.children); // Recursively traverse children
-          if (item.termId === term.id) {
-            console.log(JSON.stringify(newItem));
-          }
+          newItem.children = traverse(newItem.children);
           return newItem;
         });
       }
@@ -1474,14 +1474,15 @@ const useLogic = (isExprCalls) => {
     }
 
     const {newDrilldown, newTermProps} = updateExpandedStateHierarchically(anatomicalTerms);
-    console.log(`[useLogic] TEST newDrilldown:\n${JSON.stringify(newDrilldown)}`);
-    console.log(`[useLogic] TEST newTermProps:\n${JSON.stringify(newTermProps)}`);
+    
+    // Update anatomical terms state
     console.log(`[useLogic] CALL setAnatomicalTermsProps...`);
     setAnatomicalTermsProps(newTermProps);
     console.log(`[useLogic] CALL setAnatomicalTerms...`);
     setAnatomicalTerms(newDrilldown);
+    
     console.log(`[useLogic] DONE onToggleExpandCollapse.`);
-  }
+  };
 
   // Add function to process gene list
   const processGeneList = async (geneListParam) => {
@@ -1613,3 +1614,4 @@ const useLogic = (isExprCalls) => {
 };
 
 export default useLogic;
+

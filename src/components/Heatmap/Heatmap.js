@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import * as d3 from "d3";
 import Bulma from '../Bulma';
 import { Renderer } from "./Renderer";
@@ -117,21 +117,46 @@ const Heatmap = ({
     setMarginLeft(flexMarginLeft);
   }, [yTerms]);
 
-  // Color scale is computed here bc it must be passed to both the renderer and the legend
-  const values = data
-    .map((d) => d.value)
-    .filter((d) => d !== null);
-  const max = d3.max(values) || 0;
+  // Memoize the visible term IDs calculation
+  const visibleTermIds = useMemo(() => {
+    const ids = new Set();
+    
+    const traverse = (term) => {
+      ids.add(term.id);
+      if (term.isExpanded && term.children) {
+        term.children.forEach(traverse);
+      }
+    };
+    
+    yTerms.forEach(traverse);
+    return ids;
+  }, [yTerms]);
 
-  // make sure both Renderer and ColorLegend re-render when updating colorPalette
-  const colors = COLORS[colorPalette];
-  const colorScale = d3
+  // Memoize the color scale calculation
+  const colorScale = useMemo(() => {
+    // Filter values to only include visible terms
+    const visibleValues = data
+      .filter(d => visibleTermIds.has(d.y))
+      .map(d => d.value)
+      .filter(d => d !== null);
+    
+    const max = d3.max(visibleValues) || 0;
+    
+    return d3
       .scaleLinear()
-      // .scaleLinear<string>()
-      .domain(THRESHOLDS)
-      .domain(THRESHOLDS.map((t) => t * max))  // rescale the legend to the max value
-      .range(colors);
-  
+      .domain(THRESHOLDS.map(t => t * max))  // rescale the legend to the max value
+      .range(COLORS[colorPalette]);
+  }, [data, visibleTermIds, colorPalette]);
+
+  // Debug logging to verify updates
+  useEffect(() => {
+    console.log('[Heatmap] Color scale updated:', {
+      visibleTermsCount: visibleTermIds.size,
+      domain: colorScale.domain(),
+      maxValue: colorScale.domain()[colorScale.domain().length - 1]
+    });
+  }, [colorScale, visibleTermIds]);
+
   // sort entries by y coordinate
   const displayData = data.sort((a, b) => a.y.localeCompare(b.y));
 
