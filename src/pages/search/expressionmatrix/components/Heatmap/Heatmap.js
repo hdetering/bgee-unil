@@ -86,11 +86,11 @@ export const Heatmap = ({
 
   // DEBUG: remove console log in prod
   // console.log(`[Heatmap] yTerms:\n${JSON.stringify(yTerms, null, 2)}`);
-  console.log(`[Heatmap] data:\n${JSON.stringify(data)}`);
+  // console.log(`[Heatmap] data:\n${JSON.stringify(data)}`);
 
   // choose plot dimensions based on number of visible terms (y axis) and longest term label
   useEffect(() => {
-    console.log(`[Heatmap] (Re)calculating graph height...`);
+    // console.log(`[Heatmap] (Re)calculating graph height...`);
     // console.log(`[Heatmap] drilldown:\n${JSON.stringify(drilldown)}`);
     function countVisibleTerms(terms) {
       let count = 0;
@@ -111,8 +111,8 @@ export const Heatmap = ({
     }
 
     const { count: numVisibleTerms, maxLabelLength}  = countVisibleTerms(yTerms);
-    console.log(`[Heatmap] ${numVisibleTerms} visible terms`);
-    console.log(`[Heatmap] yTerms:\n${JSON.stringify(yTerms, null, 2)}`);
+    // console.log(`[Heatmap] ${numVisibleTerms} visible terms`);
+    // console.log(`[Heatmap] yTerms:\n${JSON.stringify(yTerms, null, 2)}`);
     const flexHeight = Math.max(numVisibleTerms * 30 + COLOR_LEGEND_HEIGHT, 250);
     const flexMarginLeft = Math.max(maxLabelLength * 7.5 + 50, marginLeft);
     const flexWidth = Math.max(flexMarginLeft + 50, graphWidth);
@@ -152,14 +152,6 @@ export const Heatmap = ({
       .domain(THRESHOLDS.map(t => t * maxValue))
       .range(COLORS[colorPalette]);
   }, [data, visibleTermIds, useAdaptiveScale, colorPalette]);
-
-  // Debug logging to verify updates
-  useEffect(() => {
-    console.log('Color scale updated:', {
-      visibleTermsCount: visibleTermIds.size,
-      domain: colorScale.domain()
-    });
-  }, [colorScale, visibleTermIds]);
 
   // sort entries by y coordinate
   const displayData = data.sort((a, b) => a.y.localeCompare(b.y));

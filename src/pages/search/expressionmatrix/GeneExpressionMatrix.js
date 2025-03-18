@@ -77,7 +77,7 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
   } = useLogic(isExprCalls);
 
   // DEBUG: remove console log in prod
-  console.log(`[GeneExpressionMatrix] anatomicalTerms:\n${JSON.stringify(anatomicalTerms)}`);
+  // console.log(`[GeneExpressionMatrix] anatomicalTerms:\n${JSON.stringify(anatomicalTerms)}`);
 
   const [setPageIsBrowseResult] = useState(false);
   const defaultResults = searchResult?.results?.[dataType] || [];

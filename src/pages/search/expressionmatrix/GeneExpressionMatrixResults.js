@@ -12,14 +12,9 @@ const GeneExpressionMatrixResults = ({
   maxExpScore,
   onToggleExpandCollapse,
 }) => {
-
-  // console.log(`[GeneExpressionMatrixResults] maxExpScore:\n${JSON.stringify(maxExpScore, null, 2)}`);
-  // console.log(`"ENSG00000254647" in maxExpScore ? ${"ENSG00000254647" in maxExpScore}`);
-  // console.log(`"UBERON:0000949" in maxExpScore["ENSG00000254647"] ? ${"UBERON:0000949" in maxExpScore["ENSG00000254647"]}`);
-
-  console.log(`[GeneExpressionMatrixResults] results:\n${JSON.stringify(results, null, 2)}`);
+  // console.log(`[GeneExpressionMatrixResults] results:\n${JSON.stringify(results, null, 2)}`);
   // console.log(`[GeneExpressionMatrixResults] anatomicalTerms:\n${JSON.stringify(anatomicalTerms, null, 2)}`);
-  console.log(`[GeneExpressionMatrixResults] anatomicalTerms:\n${JSON.stringify(anatomicalTerms)}`);
+  // console.log(`[GeneExpressionMatrixResults] anatomicalTerms:\n${JSON.stringify(anatomicalTerms)}`);
   const heatmapData = results.map((result) => {
     const { geneId, name: geneName } = result.gene;
     const speciesId = result.gene.species.id;
