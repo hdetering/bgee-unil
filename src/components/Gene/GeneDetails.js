@@ -111,6 +111,9 @@ const GeneDetails = ({
         <title>{meta.title}</title>
         <meta name="description" content={meta.description} />
         <meta name="keywords" content={meta.keywords} />
+        <meta property='og:title' content={meta.title} />
+        <meta property='og:description' content={meta.description} />
+        <meta property="og:url" content={meta.link} />
         <link rel="canonical" href={meta.link} />
       </Helmet>
       <div id="gene-wrapper">

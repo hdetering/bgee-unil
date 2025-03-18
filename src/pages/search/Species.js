@@ -140,6 +140,10 @@ const Species = () => {
           <title>{metaTitle}</title>
           <meta name="description" content={metaDescription} />
           <meta name="keywords" content={metaKeywords} />
+          <meta property='og:title' content={metaTitle} />
+          <meta property='og:description' content={metaDescription} />
+          <meta property="og:image" content={`${config.genericDomain}${config.imageDomain}/species/${data.species.id}_light.jpg`} />
+          <meta property="og:url" content={metaLink} />
           <link rel="canonical" href={metaLink} />
         </Helmet>
       )}

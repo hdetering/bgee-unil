@@ -5,6 +5,7 @@ import PATHS from '../../routes/paths';
 import Bulma from '../../components/Bulma';
 import api from '../../api';
 import GridSpecies from '../../components/GridSpecies/GridSpecies';
+import config from "../../config.json";
 
 const SpeciesList = () => {
   const [speciesList, setSpeciesList] = useState([]);
@@ -29,15 +30,18 @@ const SpeciesList = () => {
     [speciesList]
   );
 
+  const title = 'Bgee Species list';
+  const description = 'List of species with expression data available in Bgee';
   return (
     <>
       <Helmet>
-        <title>Species list</title>
-        <meta
-          name="description"
-          content="List of species with expression data available in Bgee"
-        />
+        <title>{title}</title>
+        <meta property='og:title' content={title} />
+        <meta name="description" content={description} />
+        <meta property='og:description' content={description} />
         <meta name="keywords" content={metaKeywords} />
+        <meta property="og:url" content={`${config.genericDomain}${PATHS.SEARCH.SPECIES}`} />
+        <link rel="canonical" href={`${config.genericDomain}${PATHS.SEARCH.SPECIES}`} />
       </Helmet>
       <div className="content has-text-centered">
         <Bulma.Title size={3}>Bgee species list</Bulma.Title>
