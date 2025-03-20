@@ -48,8 +48,8 @@ export const Renderer = forwardRef(({
 
   // TODO: debug - why is "isPopulated" property not passed on correctly from Heatmap??
   // DEBUG: remove console log in prod
-  console.log(`[Renderer] drilldown:\n${JSON.stringify(drilldown)}`);
-  console.log(`[Renderer] termProps:\n${JSON.stringify(termProps)}`);
+  // console.log(`[Renderer] drilldown:\n${JSON.stringify(drilldown)}`);
+  // console.log(`[Renderer] termProps:\n${JSON.stringify(termProps)}`);
 
   // reorder y-axis terms according to hierarchy
   function orderLabelsHierarchically(objectList) {
@@ -86,7 +86,7 @@ export const Renderer = forwardRef(({
           traverse(child.children, depth + 1, child.isExpanded, [...(newLabel.embeddedInLvls), depth+1]);
         } else {
           // DEBUG: remove console log in prod
-          console.log(`[Renderer] not visible:\n${JSON.stringify(child)}`);
+          // console.log(`[Renderer] not visible:\n${JSON.stringify(child)}`);
         }
       });
     }
@@ -104,8 +104,8 @@ export const Renderer = forwardRef(({
   // sort y-axis labels hierarchically  
   const drilldownCopy = JSON.parse(JSON.stringify(drilldown));
   const yTermsOrdered = orderLabelsHierarchically(drilldownCopy);
-  console.log(`[Renderer] yTerms:\n${JSON.stringify(yTerms)}`);
-  console.log(`[Renderer] yTermsOrdered:\n${JSON.stringify(yTermsOrdered)}`);
+  // console.log(`[Renderer] yTerms:\n${JSON.stringify(yTerms)}`);
+  // console.log(`[Renderer] yTermsOrdered:\n${JSON.stringify(yTermsOrdered)}`);
   // TODO: filter out missing data?
   const yTermsOrderedCopy = JSON.parse(JSON.stringify(yTermsOrdered));
   const yLblOrdered = yTermsOrderedCopy;
@@ -395,8 +395,6 @@ export const Renderer = forwardRef(({
     );
   });
 
-  console.log(`[Renderer] Preparing y labels...`);
-  // const yLabels = allYGroups.map((name, i) => {
   const yLabels = yLblOrdered.map((term, i) => {
     const y = yScale(term.label);
 
@@ -469,9 +467,9 @@ export const Renderer = forwardRef(({
     );
   });
 
-  const [min = 0, max = 0] = d3.extent(data.map((d) => d.value)); // extent can return [undefined, undefined], default to [0,0] to fix types
-  console.log(`[Renderer] min: ${min}, max: ${max}`);
-
+  const domain = colorScale.domain();
+  const max = domain[domain.length - 1];
+  
   // create numbers 1..100
   const stopsIdx = Array(101).fill().map((_, index) => index);
   const colorLegendStops = stopsIdx.map((idx) => (

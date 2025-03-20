@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import * as d3 from "d3";
 import Bulma from '../../../../../components/Bulma';
 import { Renderer } from "./Renderer";
@@ -35,6 +35,7 @@ export const Heatmap = ({
   const [showMissingData, setShowMissingData] = useState(true);
   const [showHomologs, setShowHomologs] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [useAdaptiveScale, setUseAdaptiveScale] = useState(false);
 
 
   // handle display property changes
@@ -79,14 +80,17 @@ export const Heatmap = ({
   const updateShowSettings = () => {
     setShowSettings(!showSettings);
   };
+  const updateUseAdaptiveScale = () => {
+    setUseAdaptiveScale(!useAdaptiveScale);
+  };
 
   // DEBUG: remove console log in prod
   // console.log(`[Heatmap] yTerms:\n${JSON.stringify(yTerms, null, 2)}`);
-  console.log(`[Heatmap] data:\n${JSON.stringify(data)}`);
+  // console.log(`[Heatmap] data:\n${JSON.stringify(data)}`);
 
   // choose plot dimensions based on number of visible terms (y axis) and longest term label
   useEffect(() => {
-    console.log(`[Heatmap] (Re)calculating graph height...`);
+    // console.log(`[Heatmap] (Re)calculating graph height...`);
     // console.log(`[Heatmap] drilldown:\n${JSON.stringify(drilldown)}`);
     function countVisibleTerms(terms) {
       let count = 0;
@@ -107,8 +111,8 @@ export const Heatmap = ({
     }
 
     const { count: numVisibleTerms, maxLabelLength}  = countVisibleTerms(yTerms);
-    console.log(`[Heatmap] ${numVisibleTerms} visible terms`);
-    console.log(`[Heatmap] yTerms:\n${JSON.stringify(yTerms, null, 2)}`);
+    // console.log(`[Heatmap] ${numVisibleTerms} visible terms`);
+    // console.log(`[Heatmap] yTerms:\n${JSON.stringify(yTerms, null, 2)}`);
     const flexHeight = Math.max(numVisibleTerms * 30 + COLOR_LEGEND_HEIGHT, 250);
     const flexMarginLeft = Math.max(maxLabelLength * 7.5 + 50, marginLeft);
     const flexWidth = Math.max(flexMarginLeft + 50, graphWidth);
@@ -117,21 +121,38 @@ export const Heatmap = ({
     setMarginLeft(flexMarginLeft);
   }, [yTerms]);
 
-  // Color scale is computed here bc it must be passed to both the renderer and the legend
-  const values = data
-    .map((d) => d.value)
-    .filter((d) => d !== null);
-  const max = d3.max(values) || 0;
+  // Memoize the visible term IDs calculation
+  const visibleTermIds = useMemo(() => {
+    const ids = new Set();
+    
+    const traverse = (term) => {
+      ids.add(term.id);
+      if (term.isExpanded && term.children) {
+        term.children.forEach(traverse);
+      }
+    };
+    
+    yTerms.forEach(traverse);
+    return ids;
+  }, [yTerms]);
 
-  // make sure both Renderer and ColorLegend re-render when updating colorPalette
-  const colors = COLORS[colorPalette];
-  const colorScale = d3
+  // Memoize the filtered values and color scale
+  const colorScale = useMemo(() => {
+    const visibleValues = data
+      .filter(d => visibleTermIds.has(d.y))
+      .map(d => d.value)
+      .filter(d => d !== null);
+      
+    const maxValue = useAdaptiveScale ? 
+      (Math.max(...visibleValues, 0)) : 
+      100;
+    
+    return d3
       .scaleLinear()
-      // .scaleLinear<string>()
-      .domain(THRESHOLDS)
-      .domain(THRESHOLDS.map((t) => t * max))  // rescale the legend to the max value
-      .range(colors);
-  
+      .domain(THRESHOLDS.map(t => t * maxValue))
+      .range(COLORS[colorPalette]);
+  }, [data, visibleTermIds, useAdaptiveScale, colorPalette]);
+
   // sort entries by y coordinate
   const displayData = data.sort((a, b) => a.y.localeCompare(b.y));
 
@@ -446,6 +467,16 @@ export const Heatmap = ({
                           <option value="mako">mako</option>
                           <option value="turbo">turbo</option>
                         </select>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>adaptive color scale:</td>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={useAdaptiveScale}
+                        onChange={updateUseAdaptiveScale}
+                      />
                     </td>
                   </tr>
                   <tr>
