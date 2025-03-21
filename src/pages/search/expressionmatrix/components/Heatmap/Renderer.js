@@ -13,7 +13,6 @@ export const Renderer = forwardRef(({
   width,
   height,
   data,
-  yTerms,
   drilldown,
   termProps,
   hoveredCell,

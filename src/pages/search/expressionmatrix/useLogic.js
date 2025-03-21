@@ -682,7 +682,7 @@ const useLogic = (isExprCalls) => {
     setIsLoading(true);
 
     try {
-      console.log(`[useLogic.triggerInitialSearch] submitting API requests...`);
+      // console.log(`[useLogic.triggerInitialSearch] submitting API requests...`);
       const [ result1, result2 ] = await Promise.all([
         api.search.geneExpressionMatrix.initialSearch(params),
         api.search.geneExpressionMatrix.initialSearchComplementary(params)
@@ -1353,11 +1353,11 @@ const useLogic = (isExprCalls) => {
   // Add useEffect to trigger search when initialization is complete
   useEffect(() => {
     if (isInitializingFromUrl && selectedGene.length > 0 && selectedSpecies.value !== EMPTY_SPECIES_VALUE.value) {
-      console.log('[useEffect] States ready for search:', {
-        selectedGene,
-        selectedSpecies,
-        isInitializingFromUrl
-      });
+      // console.log('[useEffect] States ready for search:', {
+      //   selectedGene,
+      //   selectedSpecies,
+      //   isInitializingFromUrl
+      // });
       triggerInitialSearch();
       setIsInitializingFromUrl(false); // Reset flag after triggering search
     }
@@ -1382,9 +1382,9 @@ const useLogic = (isExprCalls) => {
   }, [loc.search]);
 
   const resetForm = (isSpeciesChange = false, preserveGenes = false) => {
-    console.log(`[useLogic.resetForm] resetForm called with:`, {isSpeciesChange, preserveGenes});
+    // console.log(`[useLogic.resetForm] resetForm called with:`, {isSpeciesChange, preserveGenes});
     if (!preserveGenes) {
-      console.log(`[useLogic.resetForm] Clearing genes in resetForm`);
+      // console.log(`[useLogic.resetForm] Clearing genes in resetForm`);
       setSelectedGene([]);
     }
     setSelectedCellTypes([]);

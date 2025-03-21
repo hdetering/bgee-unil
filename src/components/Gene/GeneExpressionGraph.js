@@ -166,8 +166,8 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
     }
 
     // Create the nested structure for each root term
-    console.log(`[GeneExpressionGraph.prepTermHierarchy] termProps:\n${JSON.stringify(termProps)}`);
-    console.log(`[GeneExpressionGraph.prepTermHierarchy] roots:\n${JSON.stringify(roots)}`);
+    // console.log(`[GeneExpressionGraph.prepTermHierarchy] termProps:\n${JSON.stringify(termProps)}`);
+    // console.log(`[GeneExpressionGraph.prepTermHierarchy] roots:\n${JSON.stringify(roots)}`);
     const anatTerms = roots.map(root => createNestedStructure(root));
     // console.log(`[GeneExpressionGraph.triggerInitialSearch] anatTerms (top-level):\n${JSON.stringify(anatTerms, null, 2)}`);
 
@@ -223,14 +223,14 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
   const triggerInitialSearch = async () => {
     const params = getSearchParams();
 
-    console.log(`[GeneExpressionGraph.triggerInitialSearch] selected gene:\n${JSON.stringify(params.selectedGene)}`);
-    console.log(`[GeneExpressionGraph.triggerInitialSearch] selected species:\n${JSON.stringify(params.selectedSpecies)}`);
-    console.log(`[GeneExpressionGraph.triggerInitialSearch] params:\n${JSON.stringify(params)}`);
+    // console.log(`[GeneExpressionGraph.triggerInitialSearch] selected gene:\n${JSON.stringify(params.selectedGene)}`);
+    // console.log(`[GeneExpressionGraph.triggerInitialSearch] selected species:\n${JSON.stringify(params.selectedSpecies)}`);
+    // console.log(`[GeneExpressionGraph.triggerInitialSearch] params:\n${JSON.stringify(params)}`);
 
     setIsLoading(true);
 
     try {
-      console.log(`[GeneExpressionGraph.triggerInitialSearch] submitting API requests...`);
+      // console.log(`[GeneExpressionGraph.triggerInitialSearch] submitting API requests...`);
       const [ result1, result2 ] = await Promise.all([
         api.search.geneExpressionMatrix.initialSearch(params),
         api.search.geneExpressionMatrix.initialSearchComplementary(params)
@@ -240,13 +240,13 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
       const { resp: resp2 } = result2;
 
       if (resp1.code === 200 && resp2.code === 200) {
-        console.log(JSON.stringify(resp1));
-        console.log(JSON.stringify(resp2));
+        // console.log(JSON.stringify(resp1));
+        // console.log(JSON.stringify(resp2));
 
         const{ anatTerms, termProps } = prepTermHierarchy(resp1.data.expressionData.expressionCalls);
-        console.log(`[GeneExpressionGraph.triggerInitialSearch] anatTerms:\n${JSON.stringify(anatTerms)}`);
+        // console.log(`[GeneExpressionGraph.triggerInitialSearch] anatTerms:\n${JSON.stringify(anatTerms)}`);
         setAnatomicalTerms(anatTerms);
-        console.log(`[GeneExpressionGraph.triggerInitialSearch] termProps:\n${JSON.stringify(termProps)}`);
+        // console.log(`[GeneExpressionGraph.triggerInitialSearch] termProps:\n${JSON.stringify(termProps)}`);
         const newTermProps = addLowLevelTerms(
           ROOT_TERM_ANAT_ENTITY,
           anatTerms,
