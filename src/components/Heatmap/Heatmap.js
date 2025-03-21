@@ -298,51 +298,47 @@ const Heatmap = ({
       }}
     >
       <header className="card-header">
-        <p className="card-header-title">
-          Download
-          <span style={{ marginLeft: "10px" }} />
-          <div className="is-flex is-justify-content-flex-end">
-            <Bulma.Button
-              className="download-btn is-small mr-2"
-              onClick={downloadPng}
-              renderAs="a"
-              target="_blank"
-              rel="noreferrer"
-            >
-              PNG
-              <span className="icon is-small ml-1">
-                <ion-icon name="download-outline" />
-              </span>
-            </Bulma.Button>
+        <div className="card-header-title">
+          <span className="mr-2">Download</span>
+          <Bulma.Button
+            className="download-btn is-small mr-2"
+            onClick={downloadPng}
+            renderAs="a"
+            target="_blank"
+            rel="noreferrer"
+          >
+            PNG
+            <span className="icon is-small ml-1">
+              <ion-icon name="download-outline" />
+            </span>
+          </Bulma.Button>
 
-            <Bulma.Button
-              className="download-btn is-small mr-2"
-              onClick={downloadSvg}
-              renderAs="a"
-              target="_blank"
-              rel="noreferrer"
-            >
-              SVG
-              <span className="icon is-small ml-1">
-                <ion-icon name="download-outline" />
-              </span>
-            </Bulma.Button>
+          <Bulma.Button
+            className="download-btn is-small mr-2"
+            onClick={downloadSvg}
+            renderAs="a"
+            target="_blank"
+            rel="noreferrer"
+          >
+            SVG
+            <span className="icon is-small ml-1">
+              <ion-icon name="download-outline" />
+            </span>
+          </Bulma.Button>
 
-            <Bulma.Button
-              className="download-btn is-small mr-2"
-              onClick={downloadTsv}
-              renderAs="a"
-              target="_blank"
-              rel="noreferrer"
-            >
-              TSV
-              <span className="icon is-small ml-1">
-                <ion-icon name="download-outline" />
-              </span>
-            </Bulma.Button>
-
-          </div>
-        </p>
+          <Bulma.Button
+            className="download-btn is-small mr-2"
+            onClick={downloadTsv}
+            renderAs="a"
+            target="_blank"
+            rel="noreferrer"
+          >
+            TSV
+            <span className="icon is-small ml-1">
+              <ion-icon name="download-outline" />
+            </span>
+          </Bulma.Button>
+        </div>
       </header>
     </div>
 

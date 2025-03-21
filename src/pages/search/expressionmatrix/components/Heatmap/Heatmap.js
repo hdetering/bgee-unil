@@ -377,8 +377,8 @@ export const Heatmap = ({
       }}
     >
       <header className="card-header">
-        <p className="card-header-title">
-          Download
+        <div className="card-header-title is-flex is-align-items-center">
+          <span>Download</span>
           <span style={{ marginLeft: "10px" }} />
           <div className="is-flex is-justify-content-flex-end">
             <Bulma.Button
@@ -419,9 +419,8 @@ export const Heatmap = ({
                 <ion-icon name="download-outline" />
               </span>
             </Bulma.Button>
-
           </div>
-        </p>
+        </div>
       </header>
     </div>
 

@@ -266,7 +266,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
       console.log(`[GeneExpressionGraph.triggerInitialSearch] ERROR:\n${JSON.stringify(error)}`);
       setIsLoading(false);
     } finally {
-      console.log(`[GeneExpressionGraph.triggerInitialSearch] finally.`)
+      // console.log(`[GeneExpressionGraph.triggerInitialSearch] finally.`)
     }
   };
 
