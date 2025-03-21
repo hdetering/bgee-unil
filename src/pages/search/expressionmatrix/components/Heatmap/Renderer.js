@@ -6,7 +6,7 @@ import { ColorLegendSvg } from "./ColorLegendSvg";
 // import styles from "./renderer.module.css";
 import fonts from "./fonts";
 
-const MARGIN = { top: 50, right: 10, bottom: 50, left: 200 };
+const MARGIN = { top: 60, right: 60, bottom: 50, left: 200 };
 const COLOR_LEGEND_MARGIN = { top: 0, right: 0, bottom: 50, left: 0 };
 
 export const Renderer = forwardRef(({

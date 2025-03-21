@@ -52,7 +52,7 @@ export const Heatmap = ({
   const [showLegend, setShowLegend] = useState(() => 
     getStoredValue(STORAGE_KEYS.SHOW_LEGEND, true));
   const [xLabelRotation, setXLabelRotation] = useState(() => 
-    getStoredValue(STORAGE_KEYS.X_LABEL_ROTATION, 340));
+    getStoredValue(STORAGE_KEYS.X_LABEL_ROTATION, 325));
   const [yLabelAlign, setYLabelAlign] = useState(() => 
     getStoredValue(STORAGE_KEYS.Y_LABEL_ALIGN, yLabelJustify));
   const [graphWidth, setGraphWidth] = useState(() => 
