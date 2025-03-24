@@ -45,6 +45,7 @@ export const Heatmap = ({
   termProps,
   yLabelJustify = 'right',
   onToggleExpandCollapse,
+  isLoading,
 }) => {
   // COMPONENT STATE
   const [hoveredCell, setHoveredCell] = useState(null);
@@ -316,57 +317,64 @@ export const Heatmap = ({
     });
   };
 
+  // Reset clickedCell when isLoading changes to true
+  useEffect(() => {
+    if (isLoading) {
+      setClickedCell(null);
+    }
+  }, [isLoading]);
+
   return (
     <>
       <div style={{ position: "relative", backgroundColor: bgColor }}>
 
       <div className="columns">
-      <div className="column">
-      <Renderer
-        ref={svgRef}
-        width={graphWidth}
-        height={graphHeight - COLOR_LEGEND_HEIGHT}
-        backgroundColor={bgColor}
-        data={displayData}
-        getChildData={getChildData}
-        yTerms={yTerms}
-        drilldown={yTerms}
-        termProps={termProps}
-        hoveredCell={hoveredCell}
-        setHoveredCell={setHoveredCell}
-        clickedCell={clickedCell}
-        setClickedCell={setClickedCell}
-        onToggleExpandCollapse={onToggleExpandCollapse}
-        colorScale={colorScale}
-        marginLeft={marginLeft}
-        xLabelRotation={xLabelRotation}
-        yLabelJustify={yLabelAlign}
-        showLegend={showLegend}
-        showMissingData={showMissingData}
-        showDescMax={showDescMax}
-        colorLegendWidth={200}
-        colorLegendHeight={COLOR_LEGEND_HEIGHT}
-        setGraphWidth={setGraphWidth}
-        setGraphHeight={setGraphHeight}
-      />
+        <div className="column">
+        <Renderer
+          ref={svgRef}
+          width={graphWidth}
+          height={graphHeight - COLOR_LEGEND_HEIGHT}
+          backgroundColor={bgColor}
+          data={displayData}
+          getChildData={getChildData}
+          yTerms={yTerms}
+          drilldown={yTerms}
+          termProps={termProps}
+          hoveredCell={hoveredCell}
+          setHoveredCell={setHoveredCell}
+          clickedCell={clickedCell}
+          setClickedCell={setClickedCell}
+          onToggleExpandCollapse={onToggleExpandCollapse}
+          colorScale={colorScale}
+          marginLeft={marginLeft}
+          xLabelRotation={xLabelRotation}
+          yLabelJustify={yLabelAlign}
+          showLegend={showLegend}
+          showMissingData={showMissingData}
+          showDescMax={showDescMax}
+          colorLegendWidth={200}
+          colorLegendHeight={COLOR_LEGEND_HEIGHT}
+          setGraphWidth={setGraphWidth}
+          setGraphHeight={setGraphHeight}
+        />
 
-      <Tooltip
-        interactionData={hoveredCell}
-        width={graphWidth}
-        height={graphHeight - COLOR_LEGEND_HEIGHT}
-      />
-      
-      </div>
-      <div className="column" style={{ position: 'relative', zIndex: 2 }}>
-      <DetailView
-        interactionData={clickedCell}
-        xPos={0}
-        yPos={0}
-        width={500}
-        height={graphHeight}
-        style={{ position: 'relative' }}
-      />
-      </div>
+        <Tooltip
+          interactionData={hoveredCell}
+          width={graphWidth}
+          height={graphHeight - COLOR_LEGEND_HEIGHT}
+        />
+        
+        </div>
+        <div className="column" style={{ position: 'relative', zIndex: 2 }}>
+          <DetailView
+            interactionData={clickedCell}
+            xPos={0}
+            yPos={0}
+            width={500}
+            height={graphHeight}
+            style={{ position: 'relative' }}
+          />
+        </div>
       </div>
     </div>
 
