@@ -1,25 +1,8 @@
 import React, { useRef } from 'react';
 
 const TreeNode = ({ node, depth, index, yScale, toggleCollapse, labelFont }) => {
-  // const [collapsed, setCollapsed] = useState(false);
   const gRef = useRef(null);
-  // const [width, setWidth] = useState(0);
-  // const [height, setHeight] = useState(0);
 
-  /*
-  useEffect(() => {
-    if (gRef.current) {
-      const bbox = gRef.current.getBBox();
-      setWidth(bbox.width);
-      setHeight(bbox.height);
-    }
-    if (node.isTopLevelTerm && depth > 0) {
-      setCollapsed(true);
-    }
-  }, []);
-  */
-
-  // const toggleCollapse = () => setCollapsed(!collapsed);
   const onToggleClick = (event, term) => {
     toggleCollapse(term);
   }
@@ -30,15 +13,12 @@ const TreeNode = ({ node, depth, index, yScale, toggleCollapse, labelFont }) => 
     toggleIcon = node.isExpanded ? '[-]' : '[+]';
   }
 
-  // const y = yScale(node.label);
   const y = yScale(node.id);
   const yPos = y + yScale.bandwidth() / 2;
   const bandwidth = yScale.bandwidth();
-  // const lastChildYPos = Math.max(...node.children.map(n => yScale(n.label)));
   const lastChildYPos = Math.max(...node.children.map(n => yScale(n.id)));
 
   return (
-    // <g ref={gRef} id={node.id} transform={`translate(0, ${(index + depth) * 20})`}>
     <g ref={gRef} id={node.id}>
       {depth > 0 && (
         <line
@@ -90,7 +70,7 @@ const TreeNode = ({ node, depth, index, yScale, toggleCollapse, labelFont }) => 
       )}
         
       
-      {hasChildren && ( // yPos + 2 + (numVisibleChildren-1) * bandwidth
+      {hasChildren && (
         <>
           <line
             x1={depth * 20 + 5}

@@ -682,7 +682,7 @@ const useLogic = (isExprCalls) => {
     setIsLoading(true);
 
     try {
-      console.log(`[useLogic.triggerInitialSearch] submitting API requests...`);
+      // console.log(`[useLogic.triggerInitialSearch] submitting API requests...`);
       const [ result1, result2 ] = await Promise.all([
         api.search.geneExpressionMatrix.initialSearch(params),
         api.search.geneExpressionMatrix.initialSearchComplementary(params)
@@ -1275,12 +1275,25 @@ const useLogic = (isExprCalls) => {
 
       const resp1 = await api.search.geneExpressionMatrix.getRequestParams(params, false);
       if (resp1.resp.code === 200) {
-        console.log(`[useLogic.initFromUrlParams] simple RP resp:\n${JSON.stringify(resp1, null, 2)}`);
+        // console.log(`[useLogic.initFromUrlParams] simple RP resp:\n${JSON.stringify(resp1, null, 2)}`);
 
         const simpleParams = resp1.resp.requestParameters;
+        
+        // Check for gene_list first before processing other parameters
+        if (simpleParams.gene_list) {
+          // Join array items with newlines and encode for URL
+          const encodedGeneList = simpleParams.gene_list.join('%0A');
+          // Redirect to same page with gene_list parameter
+          history.replace({
+            pathname: loc.pathname,
+            search: `?gene_list=${encodedGeneList}`
+          });
+          return; // Exit the entire function
+        }
+
         const searchParamsNew = new URLSearchParams();
 
-        // add simple params to new search params
+        // Process other parameters
         Object.entries(simpleParams).forEach(([key, value]) => {
           if (
             key === 'gene_id' ||
@@ -1304,7 +1317,7 @@ const useLogic = (isExprCalls) => {
         // Step 2: get detailed request parameters
         const resp2 = await api.search.geneExpressionMatrix.getRequestParams(params, true);
         if (resp2.resp.code === 200) {
-          console.log(`[useLogic.initFromUrlParams] detailed RP resp:\n${JSON.stringify(resp2, null, 2)}`);
+          // console.log(`[useLogic.initFromUrlParams] detailed RP resp:\n${JSON.stringify(resp2, null, 2)}`);
           const { requestDetails } = resp2.resp.data;
           const {
             requestedSpecies,
@@ -1340,11 +1353,11 @@ const useLogic = (isExprCalls) => {
   // Add useEffect to trigger search when initialization is complete
   useEffect(() => {
     if (isInitializingFromUrl && selectedGene.length > 0 && selectedSpecies.value !== EMPTY_SPECIES_VALUE.value) {
-      console.log('[useEffect] States ready for search:', {
-        selectedGene,
-        selectedSpecies,
-        isInitializingFromUrl
-      });
+      // console.log('[useEffect] States ready for search:', {
+      //   selectedGene,
+      //   selectedSpecies,
+      //   isInitializingFromUrl
+      // });
       triggerInitialSearch();
       setIsInitializingFromUrl(false); // Reset flag after triggering search
     }
@@ -1352,7 +1365,7 @@ const useLogic = (isExprCalls) => {
 
   // URL change handler
   useEffect(() => {
-    console.log(`[useLogic.js] loc.search CHANGED:\n${JSON.stringify(loc.search, null, 2)}`);
+    // console.log(`[useLogic.js] loc.search CHANGED:\n${JSON.stringify(loc.search, null, 2)}`);
 
     const searchParams = new URLSearchParams(loc.search);
     const geneList = searchParams.get('gene_list');
@@ -1369,9 +1382,9 @@ const useLogic = (isExprCalls) => {
   }, [loc.search]);
 
   const resetForm = (isSpeciesChange = false, preserveGenes = false) => {
-    console.log(`[useLogic.resetForm] resetForm called with:`, {isSpeciesChange, preserveGenes});
+    // console.log(`[useLogic.resetForm] resetForm called with:`, {isSpeciesChange, preserveGenes});
     if (!preserveGenes) {
-      console.log(`[useLogic.resetForm] Clearing genes in resetForm`);
+      // console.log(`[useLogic.resetForm] Clearing genes in resetForm`);
       setSelectedGene([]);
     }
     setSelectedCellTypes([]);

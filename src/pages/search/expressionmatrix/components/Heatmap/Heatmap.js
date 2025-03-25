@@ -8,6 +8,32 @@ import { COLORS, THRESHOLDS, COLOR_LEGEND_HEIGHT } from "./constants";
 
 const SHOW_DEBUG_OPTIONS = false;
 
+// Add constants for localStorage keys
+const STORAGE_KEYS = {
+  GRAPH_WIDTH: 'bgee-heatmap-width',
+  GRAPH_HEIGHT: 'bgee-heatmap-height',
+  SHOW_LEGEND: 'bgee-heatmap-show-legend',
+  MARGIN_LEFT: 'bgee-heatmap-margin-left',
+  X_LABEL_ROTATION: 'bgee-heatmap-x-rotation',
+  Y_LABEL_ALIGN: 'bgee-heatmap-y-align',
+  COLOR_PALETTE: 'bgee-heatmap-color-palette',
+  BG_COLOR: 'bgee-heatmap-bg-color',
+  SHOW_DESC_MAX: 'bgee-heatmap-show-desc-max',
+  SHOW_MISSING_DATA: 'bgee-heatmap-show-missing',
+  USE_ADAPTIVE_SCALE: 'bgee-heatmap-adaptive-scale'
+};
+
+// Helper function to get stored value with default
+const getStoredValue = (key, defaultValue) => {
+  const stored = localStorage.getItem(key);
+  if (stored === null) return defaultValue;
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return stored;
+  }
+};
+
 export const Heatmap = ({ 
   width, 
   height = 800,
@@ -19,34 +45,51 @@ export const Heatmap = ({
   termProps,
   yLabelJustify = 'right',
   onToggleExpandCollapse,
+  isLoading,
 }) => {
   // COMPONENT STATE
   const [hoveredCell, setHoveredCell] = useState(null);
   const [clickedCell, setClickedCell] = useState(null);
-  const [showLegend, setShowLegend] = useState(true);
-  const [xLabelRotation, setXLabelRotation] = useState(340);
-  const [yLabelAlign, setYLabelAlign] = useState(yLabelJustify);
-  const [graphWidth, setGraphWidth] = useState(width);
-  const [graphHeight, setGraphHeight] = useState(height);
-  const [colorPalette, setColorPalette] = useState('viridis');
-  const [bgColor, setBgColor] = useState(backgroundColor);
-  const [marginLeft, setMarginLeft] = useState(200);
-  const [showDescMax, setShowDescMax] = useState('none');
-  const [showMissingData, setShowMissingData] = useState(true);
+  const [showLegend, setShowLegend] = useState(() => 
+    getStoredValue(STORAGE_KEYS.SHOW_LEGEND, true));
+  const [xLabelRotation, setXLabelRotation] = useState(() => 
+    getStoredValue(STORAGE_KEYS.X_LABEL_ROTATION, 325));
+  const [yLabelAlign, setYLabelAlign] = useState(() => 
+    getStoredValue(STORAGE_KEYS.Y_LABEL_ALIGN, yLabelJustify));
+  const [graphWidth, setGraphWidth] = useState(() => 
+    getStoredValue(STORAGE_KEYS.GRAPH_WIDTH, width));
+  const [graphHeight, setGraphHeight] = useState(() => 
+    getStoredValue(STORAGE_KEYS.GRAPH_HEIGHT, height));
+  const [colorPalette, setColorPalette] = useState(() => 
+    getStoredValue(STORAGE_KEYS.COLOR_PALETTE, 'viridis'));
+  const [bgColor, setBgColor] = useState(() => 
+    getStoredValue(STORAGE_KEYS.BG_COLOR, backgroundColor));
+  const [marginLeft, setMarginLeft] = useState(() => 
+    getStoredValue(STORAGE_KEYS.MARGIN_LEFT, 200));
+  const [showDescMax, setShowDescMax] = useState(() => 
+    getStoredValue(STORAGE_KEYS.SHOW_DESC_MAX, 'none'));
+  const [showMissingData, setShowMissingData] = useState(() => 
+    getStoredValue(STORAGE_KEYS.SHOW_MISSING_DATA, true));
   const [showHomologs, setShowHomologs] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [useAdaptiveScale, setUseAdaptiveScale] = useState(false);
-
+  const [useAdaptiveScale, setUseAdaptiveScale] = useState(() => 
+    getStoredValue(STORAGE_KEYS.USE_ADAPTIVE_SCALE, false));
 
   // handle display property changes
   const updateGraphWidth = (event) => {
-    setGraphWidth(event.target.value);
+    const { value } = event.target;
+    setGraphWidth(value);
+    localStorage.setItem(STORAGE_KEYS.GRAPH_WIDTH, value);
   }
   const updateGraphHeight = (event) => {
-    setGraphHeight(event.target.value);
+    const { value } = event.target;
+    setGraphHeight(value);
+    localStorage.setItem(STORAGE_KEYS.GRAPH_HEIGHT, value);
   }
   const updateShowLegend = () => {
-    setShowLegend(!showLegend);
+    const value = !showLegend;
+    setShowLegend(value);
+    localStorage.setItem(STORAGE_KEYS.SHOW_LEGEND, JSON.stringify(value));
   }
   const updateYLabelWidth = (event) => {
     setMarginLeft(event.target.value);
@@ -62,7 +105,9 @@ export const Heatmap = ({
     setYLabelAlign(event.target.value);
   }
   const updateColorPalette = (event) => {
-    setColorPalette(event.target.value);
+    const { value } = event.target;
+    setColorPalette(value);
+    localStorage.setItem(STORAGE_KEYS.COLOR_PALETTE, value);
   }
   const updateBgColor = (event) => {
     setBgColor(event.target.value);
@@ -81,18 +126,18 @@ export const Heatmap = ({
     setShowSettings(!showSettings);
   };
   const updateUseAdaptiveScale = () => {
-    setUseAdaptiveScale(!useAdaptiveScale);
+    const value = !useAdaptiveScale;
+    setUseAdaptiveScale(value);
+    localStorage.setItem(STORAGE_KEYS.USE_ADAPTIVE_SCALE, JSON.stringify(value));
   };
 
   // DEBUG: remove console log in prod
   // console.log(`[Heatmap] yTerms:\n${JSON.stringify(yTerms, null, 2)}`);
   // console.log(`[Heatmap] data:\n${JSON.stringify(data)}`);
 
-  // choose plot dimensions based on number of visible terms (y axis) and longest term label
-  useEffect(() => {
-    // console.log(`[Heatmap] (Re)calculating graph height...`);
-    // console.log(`[Heatmap] drilldown:\n${JSON.stringify(drilldown)}`);
-    function countVisibleTerms(terms) {
+  // Factor out the dimension calculation logic
+  const calculateDimensions = (terms, currentMarginLeft) => {
+    function countVisibleTerms(items) {
       let count = 0;
       let maxLabelLength = 0;
     
@@ -106,16 +151,21 @@ export const Heatmap = ({
         }
       }
     
-      terms.forEach(traverse);
+      items.forEach(traverse);
       return { count, maxLabelLength };
     }
 
-    const { count: numVisibleTerms, maxLabelLength}  = countVisibleTerms(yTerms);
-    // console.log(`[Heatmap] ${numVisibleTerms} visible terms`);
-    // console.log(`[Heatmap] yTerms:\n${JSON.stringify(yTerms, null, 2)}`);
+    const { count: numVisibleTerms, maxLabelLength } = countVisibleTerms(terms);
     const flexHeight = Math.max(numVisibleTerms * 30 + COLOR_LEGEND_HEIGHT, 250);
-    const flexMarginLeft = Math.max(maxLabelLength * 7.5 + 50, marginLeft);
-    const flexWidth = Math.max(flexMarginLeft + 50, graphWidth);
+    const flexMarginLeft = Math.max(maxLabelLength * 7.5 + 50, currentMarginLeft);
+    const flexWidth = Math.max(flexMarginLeft + 50, width);
+
+    return { flexHeight, flexMarginLeft, flexWidth };
+  };
+
+  // Update useEffect to use the shared function
+  useEffect(() => {
+    const { flexHeight, flexMarginLeft, flexWidth } = calculateDimensions(yTerms, marginLeft);
     setGraphHeight(flexHeight);
     setGraphWidth(flexWidth);
     setMarginLeft(flexMarginLeft);
@@ -244,57 +294,87 @@ export const Heatmap = ({
     img.src = svgUrl;
   };
 
+  // Update resetToDefaults to use the shared function
+  const resetToDefaults = () => {
+    const { flexHeight, flexMarginLeft, flexWidth } = calculateDimensions(yTerms, 200);
+
+    // Reset all settings to their default values
+    setGraphWidth(flexWidth);
+    setGraphHeight(flexHeight);
+    setShowLegend(true);
+    setMarginLeft(flexMarginLeft);
+    setXLabelRotation(340);
+    setYLabelAlign(yLabelJustify);
+    setColorPalette('viridis');
+    setBgColor(backgroundColor);
+    setShowDescMax('none');
+    setShowMissingData(true);
+    setUseAdaptiveScale(false);
+
+    // Clear all stored settings
+    Object.values(STORAGE_KEYS).forEach(key => {
+      localStorage.removeItem(key);
+    });
+  };
+
+  // Reset clickedCell when isLoading changes to true
+  useEffect(() => {
+    if (isLoading) {
+      setClickedCell(null);
+    }
+  }, [isLoading]);
+
   return (
     <>
       <div style={{ position: "relative", backgroundColor: bgColor }}>
 
       <div className="columns">
-      <div className="column">
-      <Renderer
-        ref={svgRef}
-        width={graphWidth}
-        height={graphHeight - COLOR_LEGEND_HEIGHT}
-        backgroundColor={bgColor}
-        data={displayData}
-        getChildData={getChildData}
-        yTerms={yTerms}
-        drilldown={yTerms}
-        termProps={termProps}
-        hoveredCell={hoveredCell}
-        setHoveredCell={setHoveredCell}
-        clickedCell={clickedCell}
-        setClickedCell={setClickedCell}
-        onToggleExpandCollapse={onToggleExpandCollapse}
-        colorScale={colorScale}
-        marginLeft={marginLeft}
-        xLabelRotation={xLabelRotation}
-        yLabelJustify={yLabelAlign}
-        showLegend={showLegend}
-        showMissingData={showMissingData}
-        showDescMax={showDescMax}
-        colorLegendWidth={200}
-        colorLegendHeight={COLOR_LEGEND_HEIGHT}
-        setGraphWidth={setGraphWidth}
-        setGraphHeight={setGraphHeight}
-      />
+        <div className="column">
+        <Renderer
+          ref={svgRef}
+          width={graphWidth}
+          height={graphHeight - COLOR_LEGEND_HEIGHT}
+          backgroundColor={bgColor}
+          data={displayData}
+          getChildData={getChildData}
+          yTerms={yTerms}
+          drilldown={yTerms}
+          termProps={termProps}
+          hoveredCell={hoveredCell}
+          setHoveredCell={setHoveredCell}
+          clickedCell={clickedCell}
+          setClickedCell={setClickedCell}
+          onToggleExpandCollapse={onToggleExpandCollapse}
+          colorScale={colorScale}
+          marginLeft={marginLeft}
+          xLabelRotation={xLabelRotation}
+          yLabelJustify={yLabelAlign}
+          showLegend={showLegend}
+          showMissingData={showMissingData}
+          showDescMax={showDescMax}
+          colorLegendWidth={200}
+          colorLegendHeight={COLOR_LEGEND_HEIGHT}
+          setGraphWidth={setGraphWidth}
+          setGraphHeight={setGraphHeight}
+        />
 
-      <Tooltip
-        interactionData={hoveredCell}
-        width={graphWidth}
-        height={graphHeight - COLOR_LEGEND_HEIGHT}
-      />
-      
-      </div>
-      <div className="column" style={{ position: 'relative', zIndex: 2 }}>
-      <DetailView
-        interactionData={clickedCell}
-        xPos={0}
-        yPos={0}
-        width={500}
-        height={graphHeight}
-        style={{ position: 'relative' }}
-      />
-      </div>
+        <Tooltip
+          interactionData={hoveredCell}
+          width={graphWidth}
+          height={graphHeight - COLOR_LEGEND_HEIGHT}
+        />
+        
+        </div>
+        <div className="column" style={{ position: 'relative', zIndex: 2 }}>
+          <DetailView
+            interactionData={clickedCell}
+            xPos={0}
+            yPos={0}
+            width={500}
+            height={graphHeight}
+            style={{ position: 'relative' }}
+          />
+        </div>
       </div>
     </div>
 
@@ -305,8 +385,8 @@ export const Heatmap = ({
       }}
     >
       <header className="card-header">
-        <p className="card-header-title">
-          Download
+        <div className="card-header-title is-flex is-align-items-center">
+          <span>Download</span>
           <span style={{ marginLeft: "10px" }} />
           <div className="is-flex is-justify-content-flex-end">
             <Bulma.Button
@@ -347,9 +427,8 @@ export const Heatmap = ({
                 <ion-icon name="download-outline" />
               </span>
             </Bulma.Button>
-
           </div>
-        </p>
+        </div>
       </header>
     </div>
 
@@ -537,6 +616,16 @@ export const Heatmap = ({
                 </div>
               ): null
               }
+            </div>
+          </div>
+          <div className="columns">
+            <div className="column">
+              <Bulma.Button
+                className="is-warning is-light is-outlined"
+                onClick={resetToDefaults}
+              >
+                Reset to defaults
+              </Bulma.Button>
             </div>
           </div>
         </div>

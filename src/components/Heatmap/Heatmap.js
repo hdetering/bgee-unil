@@ -8,6 +8,34 @@ import { COLORS, THRESHOLDS, COLOR_LEGEND_HEIGHT } from "./constants";
 
 const SHOW_DEBUG_OPTIONS = false;
 
+// Add constant for localStorage key
+const STORAGE_KEYS = {
+  USE_ADAPTIVE_SCALE: 'bgee-heatmap-adaptive-scale',
+  GRAPH_WIDTH: 'bgee-heatmap-graph-width',
+  GRAPH_HEIGHT: 'bgee-heatmap-graph-height',
+  SHOW_LEGEND: 'bgee-heatmap-show-legend',
+  MARGIN_LEFT: 'bgee-heatmap-margin-left',
+  X_LABEL_ROTATION: 'bgee-heatmap-x-label-rotation',
+  Y_LABEL_ALIGN: 'bgee-heatmap-y-label-align',
+  COLOR_PALETTE: 'bgee-heatmap-color-palette',
+  BACKGROUND_COLOR: 'bgee-heatmap-background-color',
+  SHOW_DESC_MAX: 'bgee-heatmap-show-desc-max',
+  SHOW_MISSING_DATA: 'bgee-heatmap-show-missing-data',
+  SHOW_HOMOLOGS: 'bgee-heatmap-show-homologs',
+  SHOW_SETTINGS: 'bgee-heatmap-show-settings'
+};
+
+// Add helper function
+const getStoredValue = (key, defaultValue) => {
+  const stored = localStorage.getItem(key);
+  if (stored === null) return defaultValue;
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return stored;
+  }
+};
+
 const Heatmap = ({ 
   width, 
   height = 800,
@@ -23,61 +51,143 @@ const Heatmap = ({
   // COMPONENT STATE
   const [hoveredCell, setHoveredCell] = useState(null);
   const [clickedCell, setClickedCell] = useState(null);
-  const [showLegend, setShowLegend] = useState(true);
-  const [xLabelRotation, setXLabelRotation] = useState(0);
-  const [yLabelAlign, setYLabelAlign] = useState(yLabelJustify);
-  const [graphWidth, setGraphWidth] = useState(width);
-  const [graphHeight, setGraphHeight] = useState(height);
-  const [colorPalette, setColorPalette] = useState('viridis');
-  const [bgColor, setBgColor] = useState(backgroundColor);
-  const [marginLeft, setMarginLeft] = useState(200);
-  const [showDescMax, setShowDescMax] = useState('none');
-  const [showMissingData, setShowMissingData] = useState(true);
-  const [showHomologs, setShowHomologs] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
+  const [showLegend, setShowLegend] = useState(() => 
+    getStoredValue(STORAGE_KEYS.SHOW_LEGEND, true));
+  const [xLabelRotation, setXLabelRotation] = useState(() => 
+    getStoredValue(STORAGE_KEYS.X_LABEL_ROTATION, 0));
+  const [yLabelAlign, setYLabelAlign] = useState(() => 
+    getStoredValue(STORAGE_KEYS.Y_LABEL_ALIGN, yLabelJustify));
+  const [graphWidth, setGraphWidth] = useState(() => 
+    getStoredValue(STORAGE_KEYS.GRAPH_WIDTH, width));
+  const [graphHeight, setGraphHeight] = useState(() => 
+    getStoredValue(STORAGE_KEYS.GRAPH_HEIGHT, height));
+  const [colorPalette, setColorPalette] = useState(() => 
+    getStoredValue(STORAGE_KEYS.COLOR_PALETTE, 'viridis'));
+  const [bgColor, setBgColor] = useState(() => 
+    getStoredValue(STORAGE_KEYS.BACKGROUND_COLOR, backgroundColor));
+  const [marginLeft, setMarginLeft] = useState(() => 
+    getStoredValue(STORAGE_KEYS.MARGIN_LEFT, 200));
+  const [showDescMax, setShowDescMax] = useState(() => 
+    getStoredValue(STORAGE_KEYS.SHOW_DESC_MAX, 'none'));
+  const [showMissingData, setShowMissingData] = useState(() => 
+    getStoredValue(STORAGE_KEYS.SHOW_MISSING_DATA, true));
+  const [showHomologs, setShowHomologs] = useState(() => 
+    getStoredValue(STORAGE_KEYS.SHOW_HOMOLOGS, false));
+  const [showSettings, setShowSettings] = useState(() => 
+    getStoredValue(STORAGE_KEYS.SHOW_SETTINGS, false));
+  const [useAdaptiveScale, setUseAdaptiveScale] = useState(() => 
+    getStoredValue(STORAGE_KEYS.USE_ADAPTIVE_SCALE, false));
 
+  // Move visibleTermIds before colorScale
+  // Memoize the visible term IDs calculation
+  const visibleTermIds = useMemo(() => {
+    const ids = new Set();
+    
+    const traverse = (term) => {
+      ids.add(term.id);
+      if (term.isExpanded && term.children) {
+        term.children.forEach(traverse);
+      }
+    };
+    
+    yTerms.forEach(traverse);
+    return ids;
+  }, [yTerms]);
+
+  // Update the colorScale useMemo to use adaptive scale
+  const colorScale = useMemo(() => {
+    // Filter values to only include visible terms
+    const visibleValues = data
+      .filter(d => visibleTermIds.has(d.y))
+      .map(d => d.value)
+      .filter(d => d !== null);
+    
+    const maxValue = useAdaptiveScale ? 
+      (Math.max(...visibleValues, 0)) : 
+      100;
+    
+    return d3
+      .scaleLinear()
+      .domain(THRESHOLDS.map(t => t * maxValue))
+      .range(COLORS[colorPalette]);
+  }, [data, visibleTermIds, colorPalette, useAdaptiveScale]);
 
   // handle display property changes
-  const updateGraphWidth = (event) => {
-    setGraphWidth(event.target.value);
-  }
-  const updateGraphHeight = (event) => {
-    setGraphHeight(event.target.value);
-  }
+  const updateGraphWidth = ({ target: { value } }) => {
+    setGraphWidth(value);
+    localStorage.setItem(STORAGE_KEYS.GRAPH_WIDTH, JSON.stringify(value));
+  };
+
+  const updateGraphHeight = ({ target: { value } }) => {
+    setGraphHeight(value);
+    localStorage.setItem(STORAGE_KEYS.GRAPH_HEIGHT, JSON.stringify(value));
+  };
+
   const updateShowLegend = () => {
-    setShowLegend(!showLegend);
+    const value = !showLegend;
+    setShowLegend(value);
+    localStorage.setItem(STORAGE_KEYS.SHOW_LEGEND, JSON.stringify(value));
   }
-  const updateYLabelWidth = (event) => {
-    setMarginLeft(event.target.value);
-  }
-  const updateXLabelRotation = (event) => {
+
+  const updateYLabelWidth = ({ target: { value } }) => {
+    setMarginLeft(value);
+    localStorage.setItem(STORAGE_KEYS.MARGIN_LEFT, JSON.stringify(value));
+  };
+
+  const updateXLabelRotation = ({ target: { value } }) => {
     try {
-      setXLabelRotation(parseInt(event.target.value, 10));
+      const parsedValue = parseInt(value, 10);
+      setXLabelRotation(parsedValue);
+      localStorage.setItem(STORAGE_KEYS.X_LABEL_ROTATION, JSON.stringify(parsedValue));
     } catch (error) {
       console.error(`[Heatmap] updateXLabelRotation: ${error}`);
     }
-  }
-  const updateYLabelAlign = (event) => {
-    setYLabelAlign(event.target.value);
-  }
-  const updateColorPalette = (event) => {
-    setColorPalette(event.target.value);
-  }
-  const updateBgColor = (event) => {
-    setBgColor(event.target.value);
-  }
-  const updateShowDescMax = (event) => {
-    setShowDescMax(event.target.value);
-  }
+  };
+
+  const updateYLabelAlign = ({ target: { value } }) => {
+    setYLabelAlign(value);
+    localStorage.setItem(STORAGE_KEYS.Y_LABEL_ALIGN, JSON.stringify(value));
+  };
+
+  const updateColorPalette = ({ target: { value } }) => {
+    setColorPalette(value);
+    localStorage.setItem(STORAGE_KEYS.COLOR_PALETTE, JSON.stringify(value));
+  };
+
+  const updateBgColor = ({ target: { value } }) => {
+    setBgColor(value);
+    localStorage.setItem(STORAGE_KEYS.BACKGROUND_COLOR, JSON.stringify(value));
+  };
+
+  const updateShowDescMax = ({ target: { value } }) => {
+    setShowDescMax(value);
+    localStorage.setItem(STORAGE_KEYS.SHOW_DESC_MAX, JSON.stringify(value));
+  };
+
   const updateShowMissingData = () => {
-    setShowMissingData(!showMissingData);
+    const value = !showMissingData;
+    setShowMissingData(value);
+    localStorage.setItem(STORAGE_KEYS.SHOW_MISSING_DATA, JSON.stringify(value));
   }
+
   const updateShowHomologs = () => {
-    setShowHomologs(!showHomologs);
+    const value = !showHomologs;
+    setShowHomologs(value);
+    localStorage.setItem(STORAGE_KEYS.SHOW_HOMOLOGS, JSON.stringify(value));
     getHomologsData();
   }
+
   const updateShowSettings = () => {
-    setShowSettings(!showSettings);
+    const value = !showSettings;
+    setShowSettings(value);
+    localStorage.setItem(STORAGE_KEYS.SHOW_SETTINGS, JSON.stringify(value));
+  };
+
+  // Add handler for adaptive scale toggle
+  const updateUseAdaptiveScale = () => {
+    const value = !useAdaptiveScale;
+    setUseAdaptiveScale(value);
+    localStorage.setItem(STORAGE_KEYS.USE_ADAPTIVE_SCALE, JSON.stringify(value));
   };
 
   // DEBUG: remove console log in prod
@@ -116,37 +226,6 @@ const Heatmap = ({
     setGraphWidth(flexWidth);
     setMarginLeft(flexMarginLeft);
   }, [yTerms]);
-
-  // Memoize the visible term IDs calculation
-  const visibleTermIds = useMemo(() => {
-    const ids = new Set();
-    
-    const traverse = (term) => {
-      ids.add(term.id);
-      if (term.isExpanded && term.children) {
-        term.children.forEach(traverse);
-      }
-    };
-    
-    yTerms.forEach(traverse);
-    return ids;
-  }, [yTerms]);
-
-  // Memoize the color scale calculation
-  const colorScale = useMemo(() => {
-    // Filter values to only include visible terms
-    const visibleValues = data
-      .filter(d => visibleTermIds.has(d.y))
-      .map(d => d.value)
-      .filter(d => d !== null);
-    
-    const max = d3.max(visibleValues) || 0;
-    
-    return d3
-      .scaleLinear()
-      .domain(THRESHOLDS.map(t => t * max))  // rescale the legend to the max value
-      .range(COLORS[colorPalette]);
-  }, [data, visibleTermIds, colorPalette]);
 
   // sort entries by y coordinate
   const displayData = data.sort((a, b) => a.y.localeCompare(b.y));
@@ -298,51 +377,47 @@ const Heatmap = ({
       }}
     >
       <header className="card-header">
-        <p className="card-header-title">
-          Download
-          <span style={{ marginLeft: "10px" }} />
-          <div className="is-flex is-justify-content-flex-end">
-            <Bulma.Button
-              className="download-btn is-small mr-2"
-              onClick={downloadPng}
-              renderAs="a"
-              target="_blank"
-              rel="noreferrer"
-            >
-              PNG
-              <span className="icon is-small ml-1">
-                <ion-icon name="download-outline" />
-              </span>
-            </Bulma.Button>
+        <div className="card-header-title">
+          <span className="mr-2">Download</span>
+          <Bulma.Button
+            className="download-btn is-small mr-2"
+            onClick={downloadPng}
+            renderAs="a"
+            target="_blank"
+            rel="noreferrer"
+          >
+            PNG
+            <span className="icon is-small ml-1">
+              <ion-icon name="download-outline" />
+            </span>
+          </Bulma.Button>
 
-            <Bulma.Button
-              className="download-btn is-small mr-2"
-              onClick={downloadSvg}
-              renderAs="a"
-              target="_blank"
-              rel="noreferrer"
-            >
-              SVG
-              <span className="icon is-small ml-1">
-                <ion-icon name="download-outline" />
-              </span>
-            </Bulma.Button>
+          <Bulma.Button
+            className="download-btn is-small mr-2"
+            onClick={downloadSvg}
+            renderAs="a"
+            target="_blank"
+            rel="noreferrer"
+          >
+            SVG
+            <span className="icon is-small ml-1">
+              <ion-icon name="download-outline" />
+            </span>
+          </Bulma.Button>
 
-            <Bulma.Button
-              className="download-btn is-small mr-2"
-              onClick={downloadTsv}
-              renderAs="a"
-              target="_blank"
-              rel="noreferrer"
-            >
-              TSV
-              <span className="icon is-small ml-1">
-                <ion-icon name="download-outline" />
-              </span>
-            </Bulma.Button>
-
-          </div>
-        </p>
+          <Bulma.Button
+            className="download-btn is-small mr-2"
+            onClick={downloadTsv}
+            renderAs="a"
+            target="_blank"
+            rel="noreferrer"
+          >
+            TSV
+            <span className="icon is-small ml-1">
+              <ion-icon name="download-outline" />
+            </span>
+          </Bulma.Button>
+        </div>
       </header>
     </div>
 
@@ -470,6 +545,16 @@ const Heatmap = ({
                         size="10"
                         value={bgColor}
                         onChange={updateBgColor}
+                      />
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>adaptive color scale:</td>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={useAdaptiveScale}
+                        onChange={updateUseAdaptiveScale}
                       />
                     </td>
                   </tr>

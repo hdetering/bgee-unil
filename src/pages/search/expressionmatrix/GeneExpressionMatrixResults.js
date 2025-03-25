@@ -11,6 +11,7 @@ const GeneExpressionMatrixResults = ({
   // setAnatomicalTermsProps,
   maxExpScore,
   onToggleExpandCollapse,
+  isLoading,
 }) => {
   // console.log(`[GeneExpressionMatrixResults] results:\n${JSON.stringify(results, null, 2)}`);
   // console.log(`[GeneExpressionMatrixResults] anatomicalTerms:\n${JSON.stringify(anatomicalTerms, null, 2)}`);
@@ -72,6 +73,7 @@ const GeneExpressionMatrixResults = ({
         width = {800}
         height = {800}
         backgroundColor = 'white'
+        isLoading={isLoading}
       />
       ) : (
         <div className="is-flex is-justify-content-center mt-3">

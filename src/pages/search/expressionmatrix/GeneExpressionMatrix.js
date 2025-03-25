@@ -304,6 +304,7 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
               anatomicalTermsProps={anatomicalTermsProps}
               maxExpScore={maxExpScore}
               onToggleExpandCollapse={onToggleExpandCollapse}
+              isLoading={isLoading}
             />
           </div>
           <UserFeedback />

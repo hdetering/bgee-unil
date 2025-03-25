@@ -23,7 +23,7 @@ export const DetailView = ({
     return null;
   }
 
-  console.log(`[DetailView] data:\n${JSON.stringify(data)}`);
+  // console.log(`[DetailView] data:\n${JSON.stringify(data)}`);
 
   return (
     // Wrapper div
