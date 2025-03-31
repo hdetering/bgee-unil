@@ -123,9 +123,13 @@ if ( $check_url ){
                 #NOTE can be printed: print $firefox->await(...)->text();
                 #NOTE pages without async calls should not execute the await !!!
                 if ( $url =~ /^$ENV{'BASE_URL'}\/gene\// ){
+                    #TODO add a timeout!
                     $firefox->await(
                         # gene expression table xpath | no gene expression xpath (so on xrefs because longer to run and be retrieved)
-                        sub { $firefox->find('/html/body/div[3]/div/section/div/div[2]/div[3]/div[5]/table/thead/tr/th[1]/div|/html/body/div[3]/div/section/div/div[2]/div[5]/div/div/div'); }
+                        sub { $firefox->find('/html/body/div[3]/div/section/div/div[2]/div[3]/div[4]/div/div/div/div') &&
+                              $firefox->find('/html/body/div[3]/div/section/div/div[2]/div[4]/div[4]/div/div/div/div') &&
+                              $firefox->find('/html/body/div[3]/div/section/div/div[2]/div[@id="xrefs"]/div/div/div');
+                            }
                     );
                 }
                 elsif ( $url =~ /^$ENV{'BASE_URL'}\/experiment\// ){
