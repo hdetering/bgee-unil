@@ -24,6 +24,7 @@ my ($check_url, $check_links) = (0, 0);
 my ($specific_url)            = ('');
 my ($check_content)           = ('');
 my ($build_cache)             = (0);
+my ($sleep_time)              = (1);
 my %opts   = ('help|?'          => \$help,
               'debug|verbose'   => \$debug,
               'sitemap=s'       => \$sitemap_path,
@@ -33,6 +34,7 @@ my %opts   = ('help|?'          => \$help,
               'url=s'           => \$specific_url,
               'check_content=s' => \$check_content,
               'build_cache'     => \$build_cache,
+              'sleep_time=i'    => \$sleep_time,
              );
 
 my $test_options = Getopt::Long::GetOptions(%opts);
@@ -123,7 +125,7 @@ if ( $check_url ){
                 #NOTE can be printed: print $firefox->await(...)->text();
                 #NOTE pages without async calls should not execute the await !!!
                 if ( $url =~ /^$ENV{'BASE_URL'}\/gene\// ){
-                    #TODO add a timeout!
+                    #TODO  add a timeout!
                     $firefox->await(
                         # gene expression table xpath | no gene expression xpath (so on xrefs because longer to run and be retrieved)
                         sub { $firefox->find('/html/body/div[3]/div/section/div/div[2]/div[3]/div[4]/div/div/div/div') &&
@@ -169,7 +171,7 @@ if ( $check_url ){
                     }
                     #TODO
                 }
-                sleep 1  if ( !$specific_url );
+                sleep $sleep_time  if ( !$specific_url );
             }
         };
         $count++;
@@ -197,6 +199,7 @@ sub help {
 \t--sitemap        Directory of a local sitemap.xml file [default: Use the remote one]
 \t--check_content  Pattern to search in page [default: None]
 \t--build_cache    Write a result html file, per page, for a cache [default: ".($build_cache==0 ? 'False' : 'True')."]
+\t--sleep_time     Time to sleep between elements of a list of URLs [default: $sleep_time second(s)]
 \t--debug          Verbose/Debug mode
 \t--help           This message\n\n";
     exit 1;
