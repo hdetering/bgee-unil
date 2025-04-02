@@ -119,13 +119,20 @@ if ( $check_url ){
             diag("\t[[[ $cat availability ]]]");
             URL:
             for my $url ( $shuffle ? shuffle @{ $URL->{$cat} } : @{ $URL->{$cat} } ){
+                if ( $build_cache ){
+                    my $filename = build_cache_filename($url);
+                    if ( -e "$filename.html" && -s "$filename.html" ){
+                        ok(1, "[$url] already there");
+                        next URL;
+                    }
+                }
                 $firefox->go("$url");
                 #NOTE Firefox does not wait till the page is fully loaded (with ajax calls and everything). You have to search the DOM, and wait, with the async searched pattern
                 #NOTE Test with data https://www.bgee.org/gene/ENSG00000130208, or without https://www.bgee.org/gene/ENSG00000277044
                 #NOTE can be printed: print $firefox->await(...)->text();
                 #NOTE pages without async calls should not execute the await !!!
                 if ( $url =~ /^$ENV{'BASE_URL'}\/gene\// ){
-                    #TODO  add a timeout!
+                    #TODO add a timeout!
                     $firefox->await(
                         # gene expression table xpath | no gene expression xpath (so on xrefs because longer to run and be retrieved)
                         sub { $firefox->find('/html/body/div[3]/div/section/div/div[2]/div[3]/div[4]/div/div/div/div') &&
@@ -153,9 +160,7 @@ if ( $check_url ){
                     my $html = $firefox->html();
                     $html =~ s{(<img[^>]*) src="/}{$1 src="$ENV{'BASE_URL'}/}g;
                     $html =~ s{ href="/}{ href="$ENV{'BASE_URL'}/}g;
-                    my ($filename) = $url =~ m|$ENV{'BASE_URL'}/(.*)|;
-                    $filename = $filename || 'index';
-                    $filename =~ s{/}{--}g; #FIXME URLs with parameters, i.e. ?query=..., are not yet supported
+                    my $filename = build_cache_filename($url);
                     write_file("$filename.html", {binmode => ':utf8'}, $html);
                 }
 
@@ -234,8 +239,8 @@ sub parse_sitemap {
 }
 
 # From https://stackoverflow.com/questions/16584001/using-functions-in-tap-harness-instead-of-test-files
-sub runner{
-    my($harness,$test) = @_;
+sub runner {
+    my ($harness, $test) = @_;
 
     my $builder = Test::More->builder;
 
@@ -253,5 +258,15 @@ sub runner{
 
     # the output ( needs at least one newline )
     return $out;
+}
+
+sub build_cache_filename {
+    my ($url) = @_;
+
+    my ($filename) = $url =~ m|$ENV{'BASE_URL'}/(.*)|;
+    $filename = $filename || 'index';
+    $filename =~ s{/}{--}g; #FIXME URLs with parameters, i.e. ?query=..., are not yet supported
+
+    return $filename;
 }
 
