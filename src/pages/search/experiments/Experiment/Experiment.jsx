@@ -32,6 +32,11 @@ const getUserFriendlyDataType = (dataType) => {
   }
 };
 
+const formatLargeNumber = (largeNumber) => {
+  const numberToDisplay = new Intl.NumberFormat('en').format(largeNumber || 0);
+  return numberToDisplay;
+};
+
 const Experiment = () => {
   const { data, columns, onRenderCell, onFilter } = useLogic();
 
@@ -107,7 +112,7 @@ const Experiment = () => {
                   Number&nbsp;of&nbsp;Cells:
                 </span>
                 <span className="my-1 is-flex-grow-1">
-                  {data?.experiment?.numberOfAnnotatedCells}
+                  {formatLargeNumber(data?.experiment?.numberOfAnnotatedCells)}
                 </span>
               </div>
             )}
@@ -145,7 +150,7 @@ const Experiment = () => {
                   {data.experiment.id}
                 </a>
               )}
-              &nbsp;{data?.experiment?.xRef?.source?.name}
+              &nbsp; {data?.experiment?.xRef?.source?.name}
               </span>
             </div>
 
