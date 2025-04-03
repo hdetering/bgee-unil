@@ -19,6 +19,7 @@ const GenericHelmetProvider = () => (
       <meta property="og:image" content={`${config.genericDomain}/img/logo/bgee13-logo.png`} />
       <meta property="og:url" content={`${config.genericDomain}`} />
       <meta property="og:site_name" content="Bgee" />
+      <meta property="og:logo" content={`${config.genericDomain}/img/logo/bgee13-logo.png`} />
       <script>
       {`
         var _mtm = window._mtm = window._mtm || [];

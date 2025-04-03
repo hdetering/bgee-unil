@@ -66,18 +66,18 @@ export const Renderer = forwardRef(({
 
       // Sort the children based on the label
       children.sort((a, b) => a.label.localeCompare(b.label));
-  
+
       // Push the labels at the current depth
       [...childrenLowLvl, ...childrenHighLvl].forEach((child, idx, arr) => {
       // children.forEach((child, idx, arr) => {
         if (visible && (child.isPopulated || showMissingData)) {
           const newLabel = {
-            id: child.id, 
-            label: child.label, 
+            id: child.id,
+            label: child.label,
             depth,
             isTopLevelTerm: child.isTopLevelTerm,
-            isPopulated: child.isPopulated, 
-            isExpanded: child.isExpanded, 
+            isPopulated: child.isPopulated,
+            isExpanded: child.isExpanded,
             isLastChild: (idx === arr.length-1),
             embeddedInLvls: (idx === arr.length-1) ? [...(embedLvls.filter(x => x!==depth))] : [...embedLvls],
           }
@@ -89,10 +89,10 @@ export const Renderer = forwardRef(({
         }
       });
     }
-  
+
     // Start traversal from the root
     traverse(objectList, 0, true, []);
-  
+
     return orderedLabels;
   }
 
@@ -104,7 +104,7 @@ export const Renderer = forwardRef(({
   const yTermsOrderedCopy = JSON.parse(JSON.stringify(yTermsOrdered));
   const yLblOrdered = yTermsOrderedCopy;
 
-  
+
 
   // const allYGroups = useMemo(() => [...new Set(dataShow.map((d) => d.y))], [dataShow]);
   const allXGroups = useMemo(() => [...new Set(dataShow.map((d) => d.x))], [dataShow]);
@@ -118,7 +118,7 @@ export const Renderer = forwardRef(({
       // Update graph width if needed
       setGraphWidth(requiredWidth + MARGIN.right + marginLeft);
     }
-    
+
     return d3
       .scaleBand()
       .range([0, Math.max(boundsWidth, requiredWidth)])
@@ -130,7 +130,7 @@ export const Renderer = forwardRef(({
     // Calculate required height based on minimum cell height, including 4px margin
     const requiredHeight = allYGroups.length * (minCellHeight + 4);
     const actualHeight = Math.max(boundsHeight, requiredHeight);
-    
+
     return d3
       .scaleBand()
       .range([0, actualHeight])
@@ -144,7 +144,7 @@ export const Renderer = forwardRef(({
     const y = yScale(d.y);
     const cellWidth = Math.max(xScale.bandwidth()-4, minCellWidth);
     const cellHeight = Math.max(yScale.bandwidth()-4, minCellHeight);
-    
+
     if (d.value === null || !x || !y) {
       return null;
     }
@@ -222,7 +222,7 @@ export const Renderer = forwardRef(({
     //       onMouseLeave={() => setHoveredCell(null)}
     //       cursor="pointer"
     //     />
-    //   </g>     
+    //   </g>
     // );
 
     switch(showDescMax) {
@@ -288,14 +288,14 @@ export const Renderer = forwardRef(({
             cursor="pointer"
           />
 
-          <circle 
+          <circle
             key={`valueDesc-${idx}`}
             r = {r}
             cx = {cx}
             cy = {cy}
             fill = {strokeColour}
           />
-        </g>     
+        </g>
       );
 
       // split data cell horizontally (max. desc. value on right)
@@ -319,7 +319,7 @@ export const Renderer = forwardRef(({
               onClick={() => setClickedCell(cellData)}
               cursor="pointer"
             />
-    
+
             <rect
               key={`valueDesc-${idx}`}
               x={x1}
@@ -336,7 +336,7 @@ export const Renderer = forwardRef(({
               onClick={() => setClickedCell(cellData)}
               cursor="pointer"
             />
-          </g>     
+          </g>
         );
 
       // do not show descendant value
@@ -392,7 +392,7 @@ export const Renderer = forwardRef(({
         y={xLabelRotation === 0 ? yCoord : null}
         transform={xLabelRotation !== 0 ? `translate(${xCoord}, ${yCoord}) rotate(${xLabelRotation})` : null}
         textAnchor={xLabelRotation === 0 ? "middle" : "start"}
-        dominantBaseline="middle"             
+        dominantBaseline="middle"
         fontSize={15}
         // transform="`rotate(-10) translate(${xCoord}, ${yCoord})`"
       >
@@ -419,7 +419,7 @@ export const Renderer = forwardRef(({
         y={xLabelRotation === 0 ? yCoord : null}
         transform={xLabelRotation !== 0 ? `translate(${xCoord}, ${yCoord}) rotate(${xLabelRotation})` : null}
         textAnchor={xLabelRotation === 0 ? "middle" : "end"}
-        dominantBaseline="middle"             
+        dominantBaseline="middle"
         fontSize={15}
         // transform="`rotate(-10) translate(${xCoord}, ${yCoord})`"
       >
@@ -434,7 +434,7 @@ export const Renderer = forwardRef(({
     if (!y) {
       return null;
     }
-  
+
     const idx = i;
     // Calculate x position based on yLabelJustify
     const xPos = yLabelJustify === "left" ? -1 * marginLeft : -5;
@@ -452,7 +452,7 @@ export const Renderer = forwardRef(({
         // else if(term.hasBeenQueried) lblIndicator = '\u{025BD}'; // 'v';
         else lblIndicator = '<'; // 'v';
       }
-      
+
       if (yLabelJustify === "left") {
         lblTree = `${'-'.repeat(2*term.depth)}${lblIndicator} ${term.label}`;
       }
@@ -478,7 +478,7 @@ export const Renderer = forwardRef(({
       }
     }
     // console.log(`[Renderer] yLabel: ${JSON.stringify(term)}`);
-       
+
       // term.label + '\u{02518}' // '.'.repeat(2*term.depth);
       // term.label + ' '.repeat(2*term.depth);
 
@@ -560,7 +560,7 @@ export const Renderer = forwardRef(({
 
         <g transform={`translate(-${marginLeft-50}, 0)`} >
           {
-            showLegend ? 
+            showLegend ?
             <g>
               <ColorLegendSvg
                 posX={colorLegendPosX}
