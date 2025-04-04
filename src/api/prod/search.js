@@ -737,17 +737,18 @@ const search = {
         }),
 
     // TODO: remove "isOnlyCounts" param + related code
-    search: (form, isOnlyCounts, bypassInitSearchParam = false) =>
+    search: (form, isOnlyCounts = false, bypassInitSearchParam = false) =>
       new Promise((resolve, reject) => {
         const params = DEFAULT_PARAMETERS('data', form.pageType);
 
         // Here we force PageType in the URL to find it easily
         // (The "data" key is already used for the Hash so we can't count on it)
-        params.append('pageType', form.pageType);
+        // params.append('pageType', form.pageType);
         params.append('limit', '10000');
 
-        // We get the results count for "localCount"
-        params.append('get_result_count', '1');
+        if (form.discardAnaatEntityAndChildrenId) {
+          params.append('discard_anat_entity_and_children_id', form.discardAnaatEntityAndChildrenId);
+        }
 
         if (isOnlyCounts) {
           params.append('data_type', 'all');
@@ -756,17 +757,6 @@ const search = {
           form.dataType.forEach((type) => params.append('data_type', type));
 
           params.append('get_results', '1');
-          // params.append('get_filters', '1');
-          // params.append('get_column_definition', '1');
-          // display-rp is needed to extract key-value pair in order to pre-fill the form
-          params.append('display_rp', '1');
-
-          // const offset = form?.limit * (form?.pageNumber - 1);
-          // params.append('offset', offset);
-          // TODO: make sure limit is always set properly
-          // params.append('limit', form?.limit);
-          // Warning : useless for API call but usefull for prefilling pagination
-          // params.append('pageNumber', form?.pageNumber);
         }
 
         if (form.isFirstSearch && !bypassInitSearchParam) {

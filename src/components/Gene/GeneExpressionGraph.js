@@ -296,20 +296,21 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
     params.limit = BASE_LIMIT;
     params.conditionalParam2 = ['anat_entity']; // restrict to anatomical terms
     params.condObserved = 1;
+    params.discardAnaatEntityAndChildrenId = 'SUMMARY';
 
     setIsLoading(true);
     // DEBUG: remove console log in prod
-    console.log(`[GeneExpressionGraph] triggerSearchChildren - triggered!`);
-    console.log(`[GeneExpressionGraph] triggerSearchChildren - params:\n${JSON.stringify(params)}`);
+    // console.log(`[GeneExpressionGraph] triggerSearchChildren - triggered!`);
+    // console.log(`[GeneExpressionGraph] triggerSearchChildren - params:\n${JSON.stringify(params)}`);
     return api.search.geneExpressionMatrix
     .search(params, false)
     .then(({ resp, paramsURLCalled }) => {
       // DEBUG: remove in prod
-      console.log(`[GeneExpressionGraph] triggerSearchChildren - response:\n${JSON.stringify(resp)}`);
+      // console.log(`[GeneExpressionGraph] triggerSearchChildren - response:\n${JSON.stringify(resp)}`);
       if (resp.code === 200) {
         // DEBUG: remove console log in prod
-        console.log(`[GeneExpressionGraph] triggerSearchChildren - resp.data:\n${JSON.stringify(resp.data)}`);
-        console.log(`[GeneExpressionGraph] triggerSearchChildren - params:\n${JSON.stringify(params)}`)
+        // console.log(`[GeneExpressionGraph] triggerSearchChildren - resp.data:\n${JSON.stringify(resp.data)}`);
+        // console.log(`[GeneExpressionGraph] triggerSearchChildren - params:\n${JSON.stringify(params)}`)
 
         // TODO: make sure, URL reflects current query state
         // "Mirroring" management in URL's parameter (with & without hash)

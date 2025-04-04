@@ -13,7 +13,6 @@ import { flattenDevStagesList } from './components/filters/DevelopmentalAndLifeS
 import { EMPTY_SPECIES_VALUE } from './components/filters/Species/Species';
 import config from '../../../config.json';
 import { FULL_LENGTH_LABEL } from '../../../api/prod/constant';
-import { isEmpty } from '../../../helpers/arrayHelper';
 // DEBUG: remove in PROD
 // import maxExpScoreCsv from '../../../assets/maxExpScore.csv'
 
@@ -629,44 +628,18 @@ const useLogic = (isExprCalls) => {
       queryGenes: [],
     };
 
-    // Here we are filtering the filters themself
-    // We don't send to the backend the filters that have no corresponding list in the filters object from last research
-    const defaultdataFilters = searchResult?.filters?.[dataType] || {};
-    const dataFiltersExprCall = searchResult?.filters || {};
-    const dataFilters = isExprCalls ? dataFiltersExprCall : defaultdataFilters;
-    const wantedFilters = filters[dataType] || {};
-    // ( if there is any filters that have been set before )
-    if (!isEmpty(dataFilters)) {
-      const myFilters = {};
-      Object.entries(wantedFilters)
-        .filter(([wantedFilterKey]) => {
-          const filterExists = Object.entries(dataFilters).some(
-            ([, existingFilter]) =>
-              wantedFilterKey === existingFilter?.urlParameterName
-          );
-          return filterExists;
-        })
-        .forEach(([key, values]) => {
-          myFilters[key] = values;
-        });
+    const dataTypeForExpCalls =
+      dataTypesExpCalls.length === 0 ? ALL_DATA_TYPES_ID : dataTypesExpCalls;
+    params.dataType = dataTypeForExpCalls;
+    params = {
+      ...params,
+      dataQuality,
+      callTypes,
+      conditionalParam2,
+      isExprCalls,
+      condObserved,
+    };
 
-      params.filters = myFilters;
-    } else {
-      params.filters = filters[dataType];
-    }
-    if (isExprCalls) {
-      const dataTypeForExpCalls =
-        dataTypesExpCalls.length === 0 ? ALL_DATA_TYPES_ID : dataTypesExpCalls;
-      params.dataType = dataTypeForExpCalls;
-      params = {
-        ...params,
-        dataQuality,
-        callTypes,
-        conditionalParam2,
-        isExprCalls,
-        condObserved,
-      };
-    }
     return params;
   };
 
@@ -787,53 +760,6 @@ const useLogic = (isExprCalls) => {
     } finally {
       // console.log(`[useLogic.triggerInitialSearch] finally.`)
       setIsFirstSearch(false);
-    }
-  };
-
-  const triggerHomologSearch = async () => {
-    const params = getSearchParams();
-    // HD: if only one gene was selected -> get gene homologs
-    // console.log(`[useLogic.triggerSearch] selected gene:\n${JSON.stringify(params.selectedGene)}`);
-    // console.log(`[useLogic.triggerSearch] selected species:\n${JSON.stringify(params.selectedSpecies)}`);
-    const queryGenes = new Set();
-    const homologGeneIds = new Set(); // ---
-    if (params.selectedGene.length === 1) {
-      const geneId = params.selectedGene[0];
-      const speciesId = params.selectedSpecies;
-      const homologCalls = [];
-      api.search.genes.homologs(geneId, speciesId).then(async (result) => {
-        // console.log(`[useLogic.triggerSearch] homologs:\n${JSON.stringify(result.data)}`);
-
-        // collect homologous genes
-        result.data.orthologsByTaxon.forEach((entry) => {
-          entry.genes.forEach(async (gene) => {
-            // ---
-            if (gene.geneId in homologGeneIds) return;
-            homologGeneIds.add(gene.geneId);
-            const searchParams = { ...params, selectedGene: [gene.geneId], selectedSpecies: gene.species.id };
-            try {
-                const homoRes = await api.search.geneExpressionMatrix.initialSearch(searchParams);
-                homologCalls.push(homoRes.resp.data.expressionData.expressionCalls);
-                // console.log(`[useLogic.triggerHomologSearch] Search result for gene ${gene.geneId} and species ${gene.species.id}:\n${JSON.stringify(homoRes.resp.data)}`);
-                // const newData = searchResult;
-                // newData.expressionData.expressionCalls.push(homoRes.resp.data.expressionData.expressionCalls);
-                // setSearchResult(newData);
-            } catch (error) {
-                console.error(`[useLogic.triggerHomologSearch] Error searching for gene ${gene.geneId} and species ${gene.species.id}:`, error);
-            }
-              // ---
-            queryGenes.add(JSON.stringify({
-              geneId: gene.geneId,
-              speciesId: gene.species.id,
-              geneName: gene.name,
-              speciesName: `${gene.species.genus} ${gene.species.speciesName}`
-            }));
-          });
-        });
-        // console.log(`[useLogic.triggerHomologSearch] queryGenes:\n${JSON.stringify([...queryGenes])}`);
-        // console.log(`[useLogic.triggerHomologSearch] queryGenes:\n${[...queryGenes].length}`);
-        // console.log(`[useLogic.triggerHomologSearch] homologCalls:\n${JSON.stringify([...homologCalls])}`);
-      })
     }
   };
 
@@ -1015,7 +941,7 @@ const useLogic = (isExprCalls) => {
     // params.hasDevStageSubStructure = 0;
     params.limit = BASE_LIMIT;
     params.conditionalParam2 = ['anat_entity']; // HD: restrict to anatomical terms
-    // TODO: add filters?
+    params.discardAnaatEntityAndChildrenId = 'SUMMARY';
 
     setIsLoading(true);
     // DEBUG: remove console log in prod
@@ -1574,7 +1500,6 @@ const useLogic = (isExprCalls) => {
     resetForm,
     triggerSearch,
     triggerSearchChildren,
-    triggerHomologSearch,
     addConditionalParam,
     getSearchParams,
     onToggleExpandCollapse,
