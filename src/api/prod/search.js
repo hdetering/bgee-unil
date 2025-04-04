@@ -747,7 +747,7 @@ const search = {
         params.append('limit', '10000');
 
         if (form.discardAnaatEntityAndChildrenId) {
-          params.append('discard_anat_entity_and_children_id', form.discardAnaatEntityAndChildrenId);
+          params.append('discard_anat_entity_and_children_id', form.discardAnatEntityAndChildrenId);
         }
 
         if (isOnlyCounts) {

@@ -941,7 +941,7 @@ const useLogic = (isExprCalls) => {
     // params.hasDevStageSubStructure = 0;
     params.limit = BASE_LIMIT;
     params.conditionalParam2 = ['anat_entity']; // HD: restrict to anatomical terms
-    params.discardAnaatEntityAndChildrenId = 'SUMMARY';
+    params.discardAnatEntityAndChildrenId = 'SUMMARY';
 
     setIsLoading(true);
     // DEBUG: remove console log in prod

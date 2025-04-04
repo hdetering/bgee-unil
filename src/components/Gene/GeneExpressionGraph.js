@@ -296,7 +296,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
     params.limit = BASE_LIMIT;
     params.conditionalParam2 = ['anat_entity']; // restrict to anatomical terms
     params.condObserved = 1;
-    params.discardAnaatEntityAndChildrenId = 'SUMMARY';
+    params.discardAnatEntityAndChildrenId = 'SUMMARY';
 
     setIsLoading(true);
     // DEBUG: remove console log in prod
