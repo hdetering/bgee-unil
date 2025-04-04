@@ -86,7 +86,7 @@ export const DetailView = ({
                 <b>data sources:</b>
               </div>
               <div className="tags tags-source" style={{position: "relative", left: 10}}>
-                <div className="tags tags-source" style={{width: "110px;"}}>
+                <div className="tags tags-source" style={{width: "110px"}}>
                   { data.hasDataRnaSeq ?
                   <span title="bulk RNA-Seq: presence" className="tag tag-source present">R</span>
                   :
