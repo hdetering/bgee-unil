@@ -109,7 +109,7 @@ const Experiment = () => {
             {data?.experiment?.numberOfAnnotatedCells > 0 && (
               <div className="is-flex is-flex-direction-row mr-2">
                 <span className="has-text-weight-semibold my-1 labelsLeft">
-                  Number&nbsp;of&nbsp;Cells:
+                  Cell&nbsp;count:
                 </span>
                 <span className="my-1 is-flex-grow-1">
                   {formatLargeNumber(data?.experiment?.numberOfAnnotatedCells)}
