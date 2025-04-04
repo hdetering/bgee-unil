@@ -1,24 +1,40 @@
 import { useState } from 'react';
 import Bulma from '../../../../components/Bulma';
+import api from '../../../../api';
 
 const UserFeedback = () => {
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState('');
   const [email, setEmail] = useState('');
   const [sourceUrl] = useState(window.location.href);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState(null); // null | 'success' | 'error'
 
-  const handleSubmitFeedback = () => {
-    // TODO: Implement feedback submission to backend
-    console.log('Feedback submitted:', { 
-      rating, 
-      feedback, 
-      email,
-      sourceUrl
-    });
-    // Clear form
-    setRating(0);
-    setFeedback('');
-    setEmail('');
+  const handleSubmitFeedback = async () => {
+    if (!rating && !feedback.trim()) return;
+
+    setIsSubmitting(true);
+    setSubmitStatus(null);
+
+    try {
+      await api.feedback.submit({
+        sourceUrl,
+        rating,
+        comment: feedback,
+        email,
+      });
+
+      // Clear form on success
+      setRating(0);
+      setFeedback('');
+      setEmail('');
+      setSubmitStatus('success');
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      setSubmitStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -71,10 +87,23 @@ const UserFeedback = () => {
       <Bulma.Button
         className="is-primary mt-2"
         onClick={handleSubmitFeedback}
-        disabled={!rating && !feedback.trim()}
+        disabled={(!rating && !feedback.trim()) || isSubmitting}
+        loading={isSubmitting}
       >
         Submit Feedback
       </Bulma.Button>
+
+      {submitStatus === 'success' && (
+        <p className="help is-success mt-2">
+          Thank you for your feedback!
+        </p>
+      )}
+
+      {submitStatus === 'error' && (
+        <p className="help is-danger mt-2">
+          Sorry, there was an error submitting your feedback. Please try again later.
+        </p>
+      )}
     </div>
   );
 };
