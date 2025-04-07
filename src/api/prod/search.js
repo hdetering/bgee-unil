@@ -746,8 +746,8 @@ const search = {
         // params.append('pageType', form.pageType);
         params.append('limit', '10000');
 
-        if (form.discardAnaatEntityAndChildrenId) {
-          params.append('discard_anat_entity_and_children_id', form.discardAnaatEntityAndChildrenId);
+        if (form.discardAnatEntityAndChildrenId) {
+          params.append('discard_anat_entity_and_children_id', form.discardAnatEntityAndChildrenId);
         }
 
         if (isOnlyCounts) {

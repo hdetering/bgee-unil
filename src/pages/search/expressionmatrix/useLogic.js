@@ -941,7 +941,11 @@ const useLogic = (isExprCalls) => {
     // params.hasDevStageSubStructure = 0;
     params.limit = BASE_LIMIT;
     params.conditionalParam2 = ['anat_entity']; // HD: restrict to anatomical terms
-    params.discardAnaatEntityAndChildrenId = 'SUMMARY';
+    // HD: discard top-level terms from search results
+    // NOTE: use only when we want to get children of "multicellular organism"
+    if (parentId === 'UBERON:0000468-GO:0005575') {
+      params.discardAnatEntityAndChildrenId = 'SUMMARY';
+    }
 
     setIsLoading(true);
     // DEBUG: remove console log in prod

@@ -285,7 +285,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
     parentId, selectedTissueId
   ) => {
     // DEBUG: remove console log in prod
-    console.log(`[GeneExpressionGraph] triggerSearchChildren:\n${parentId}`);
+    console.log(`[GeneExpressionGraph] triggerSearchChildren:\n"${parentId}"`);
 
     const params = getSearchParams();
     params.isFirstSearch = false;
@@ -296,7 +296,12 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
     params.limit = BASE_LIMIT;
     params.conditionalParam2 = ['anat_entity']; // restrict to anatomical terms
     params.condObserved = 1;
-    params.discardAnaatEntityAndChildrenId = 'SUMMARY';
+    // HD: discard top-level terms from search results
+    // NOTE: use only when we want to get children of "multicellular organism"
+    if (parentId === 'UBERON:0000468-GO:0005575') {
+      console.log(`[GeneExpressionGraph] !use discardAnatEntityAndChildrenId: SUMMARY!`);
+      params.discardAnatEntityAndChildrenId = 'SUMMARY';
+    }
 
     setIsLoading(true);
     // DEBUG: remove console log in prod
@@ -400,13 +405,13 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
         return traverse(hierarchy);
       }
 
-      console.log(`[GeneExpressionGraph] triggerSearchChildren newChildTerms:\n${JSON.stringify([...newChildTerms], null, 2)}`);
+      // console.log(`[GeneExpressionGraph] triggerSearchChildren newChildTerms:\n${JSON.stringify([...newChildTerms], null, 2)}`);
       if (newChildTerms.size > 0) {
         const newAnatTerms = addChildren(anatomicalTerms, parentId, [...newChildTerms]);
         // DEBUG: remove console log in prod
-        console.log(`[GeneExpressionGraph] triggerSearchChildren anatomicalTerms:\n${JSON.stringify(anatomicalTerms)}`);
-        console.log(`[GeneExpressionGraph] triggerSearchChildren newAnatTerms:\n${JSON.stringify(newAnatTerms)}`);
-        console.log(`[GeneExpressionGraph] CALL setAnatomicalTerms`);
+        // console.log(`[GeneExpressionGraph] triggerSearchChildren anatomicalTerms:\n${JSON.stringify(anatomicalTerms)}`);
+        // console.log(`[GeneExpressionGraph] triggerSearchChildren newAnatTerms:\n${JSON.stringify(newAnatTerms)}`);
+        // console.log(`[GeneExpressionGraph] CALL setAnatomicalTerms`);
         setAnatomicalTerms(newAnatTerms);
         // add term props for new terms
         const newAnatTermsProps = {...anatomicalTermsProps};
@@ -427,7 +432,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
             };
           }
         });
-        console.log(`[GeneExpressionGraph] triggerSearchChildren newAnatTermsProps:\n${JSON.stringify(newAnatTermsProps)}`);
+        // console.log(`[GeneExpressionGraph] triggerSearchChildren newAnatTermsProps:\n${JSON.stringify(newAnatTermsProps)}`);
         setAnatomicalTermsProps(newAnatTermsProps);
       }
 
@@ -447,7 +452,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
 
   // updates component state!
   const onToggleExpandCollapse = (term) => {
-    console.log(`[GeneExpressionGraph] onToggleExpandCollapse:\n${JSON.stringify(term)}`);
+    // console.log(`[GeneExpressionGraph] onToggleExpandCollapse:\n${JSON.stringify(term)}`);
 
     function updateExpandedStateHierarchically(terms) {
       const newTermProps = {...anatomicalTermsProps};
@@ -461,21 +466,21 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
           if (item.id === term.id) {
             // get data for descendants
             if (!item.hasBeenQueried) {
-              console.log(`[GeneExpressionGraph] onToggleExpandCollapse - get child data for:\n${term.id}`);
+              // console.log(`[GeneExpressionGraph] onToggleExpandCollapse - get child data for:\n${term.id}`);
               triggerSearchChildren(term.id, term.anatEntityId);
               newItem.hasBeenQueried = true;
               newItem.isExpanded = true;
               newTermProps[term.id].hasBeenQueried = true;
               newTermProps[term.id].isExpanded = true;
             } else {
-              console.log(`[GeneExpressionGraph] flipping item.isExpanded from ${item.isExpanded} to ${!item.isExpanded}.`);
+              // console.log(`[GeneExpressionGraph] flipping item.isExpanded from ${item.isExpanded} to ${!item.isExpanded}.`);
               newItem.isExpanded = !item.isExpanded; // Flip expanded state
               newItem.isPopulated = item.isPopulated; // Keep populated state
             }
           }
           newItem.children = traverse(newItem.children); // Recursively traverse children
           if (item.termId === term.id) {
-            console.log(JSON.stringify(newItem));
+            // console.log(JSON.stringify(newItem));
           }
           return newItem;
         });
@@ -487,11 +492,11 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
     }
 
     const {newDrilldown, newTermProps} = updateExpandedStateHierarchically(anatomicalTerms);
-    console.log(`[GeneExpressionGraph] CALL setAnatomicalTermsProps...`);
+    // console.log(`[GeneExpressionGraph] CALL setAnatomicalTermsProps...`);
     setAnatomicalTermsProps(newTermProps);
-    console.log(`[GeneExpressionGraph] CALL setAnatomicalTerms...`);
+    // console.log(`[GeneExpressionGraph] CALL setAnatomicalTerms...`);
     setAnatomicalTerms(newDrilldown);
-    console.log(`[GeneExpressionGraph] DONE onToggleExpandCollapse.`);
+    // console.log(`[GeneExpressionGraph] DONE onToggleExpandCollapse.`);
   };
 
   const heatmapData = searchResult?.expressionData?.expressionCalls?.map((result) => {
