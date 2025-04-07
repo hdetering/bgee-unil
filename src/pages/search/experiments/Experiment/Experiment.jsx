@@ -32,6 +32,11 @@ const getUserFriendlyDataType = (dataType) => {
   }
 };
 
+const formatLargeNumber = (largeNumber) => {
+  const numberToDisplay = new Intl.NumberFormat('en').format(largeNumber || 0);
+  return numberToDisplay;
+};
+
 const Experiment = () => {
   const { data, columns, onRenderCell, onFilter } = useLogic();
 
@@ -101,6 +106,17 @@ const Experiment = () => {
               </span>
             </div>
 
+            {data?.experiment?.numberOfAnnotatedCells > 0 && (
+              <div className="is-flex is-flex-direction-row mr-2">
+                <span className="has-text-weight-semibold my-1 labelsLeft">
+                  Cell&nbsp;count:
+                </span>
+                <span className="my-1 is-flex-grow-1">
+                  {formatLargeNumber(data?.experiment?.numberOfAnnotatedCells)}
+                </span>
+              </div>
+            )}
+
             {data?.experiment?.dOI?.length > 0 && (
               <div className="is-flex is-flex-direction-row mr-2">
                 <span className="has-text-weight-semibold my-1 labelsLeft">
@@ -134,7 +150,7 @@ const Experiment = () => {
                   {data.experiment.id}
                 </a>
               )}
-              &nbsp;{data?.experiment?.xRef?.source?.name}
+              &nbsp; {data?.experiment?.xRef?.source?.name}
               </span>
             </div>
 
