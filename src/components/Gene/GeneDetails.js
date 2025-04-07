@@ -71,9 +71,6 @@ const GeneDetails = ({
 
   const meta = React.useMemo(() => {
     const latinName = `${species.genus} ${species.speciesName}`;
-    const speciesName = species.name
-      ? species.name
-      : `${species.genus} ${species.speciesName}`;
     const hasNameOpener = name ? `${name} (` : '';
     const hasNameCloser = name ? `)` : '';
     const speciesNameBrackets = species.name ? ` ( ${species.name} )` : '';
