@@ -84,7 +84,7 @@ const GeneDetails = ({
         .replace(':speciesId', geneMappedToSameGeneIdCount === 1 ? '' : species.id)
         .replace(/\/$/, '')}`;
     return {
-      title: `${name} - ${geneId} - expression in ${speciesName}`,
+      title: `${name} - ${geneId} expression in ${latinName}${speciesNameBrackets}`,
       description: `Bgee gene expression data for ${hasNameOpener}${geneId}${hasNameCloser} in ${latinName}${speciesNameBrackets}`,
       keywords: `gene expression, ${nameExpr}${geneId}, ${geneId} expression${synonymsExpr}`,
       link: canonicalLink,
