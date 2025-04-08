@@ -73,15 +73,16 @@ const GeneDetails = ({
     const latinName = `${species.genus} ${species.speciesName}`;
     const hasNameOpener = name ? `${name} (` : '';
     const hasNameCloser = name ? `)` : '';
-    const speciesNameBrackets = species.name ? ` ( ${species.name} )` : '';
+    const speciesNameBrackets = species.name ? ` (${species.name})` : '';
     const nameExpr = name ? `${name}, ${name} expression, ` : '';
+    const nameExists = name ? `${name} - ` : '';
     const synonymsExpr = synonyms ? `, ${synonyms.join(', ')}` : '';
     const canonicalLink = `${config.genericDomain}${PATHS.SEARCH.GENE_ITEM_BY_SPECIES
         .replace(':geneId', geneId)
         .replace(':speciesId', geneMappedToSameGeneIdCount === 1 ? '' : species.id)
         .replace(/\/$/, '')}`;
     return {
-      title: `${name} - ${geneId} expression in ${latinName}${speciesNameBrackets}`,
+      title: `${nameExists}${geneId} expression in ${latinName}${speciesNameBrackets}`,
       description: `Bgee gene expression data for ${hasNameOpener}${geneId}${hasNameCloser} in ${latinName}${speciesNameBrackets}`,
       keywords: `gene expression, ${nameExpr}${geneId}, ${geneId} expression${synonymsExpr}`,
       link: canonicalLink,
