@@ -15,8 +15,8 @@ export const DetailView = ({
   interactionData: data,
   xPos,
   yPos,
-  width, 
-  height 
+  width,
+  style 
 }) => {
 // }: TooltipProps) => { // TypeScript specific
   if (!data) {
@@ -26,33 +26,16 @@ export const DetailView = ({
   // console.log(`[DetailView] data:\n${JSON.stringify(data)}`);
 
   return (
-    // Wrapper div
     <div
       style={{
         width,
-        height,
         position: "relative",
         top: xPos,
         left: yPos,
-        // pointerEvents: "none",
+        ...style
       }}
-      // transform={`translate(${interactionData.xPos}, ${interactionData.xPos})`}
     >
-      {/* The actual box with dark background */}
-      <div className="card"
-        // className={styles.tooltip}
-        style={{
-          // position: "absolute",
-          // left: xPos,
-          // top: yPos,
-        }}
-        
-      >
-        {/*
-        <header className="card-header">
-          <p className="card-header-title">Details</p>
-        </header>
-        */}
+      <div className="card">
         <div className="card-content">
           <p className="title">Gene</p>
           <div className="content">
@@ -82,46 +65,48 @@ export const DetailView = ({
 
         <div className="card-content">
           <p className="title">Expression</p>
-              <div style={{position: "relative", left: 10}}>
-                <b>data sources:</b>
-              </div>
-              <div className="tags tags-source" style={{position: "relative", left: 10}}>
-                <div className="tags tags-source" style={{width: "110px"}}>
-                  { data.hasDataRnaSeq ?
-                  <span title="bulk RNA-Seq: presence" className="tag tag-source present">R</span>
-                  :
-                  <span title="bulk RNA-Seq: absence" className="tag tag-source absent">R</span>
-                  }
-                  { data.hasDataScRnaSeq ?
-                  <span title="scRNA-Seq: presence" className="tag tag-source present">SC</span>
-                  :
-                  <span title="scRNA-Seq: absence" className="tag tag-source absent">SC</span>
-                  }
-                  { data.hasDataAffy ?
-                  <span title="Affymetrix data: presence" className="tag tag-source present">A</span>
-                  :
-                  <span title="Affymetrix data: absence" className="tag tag-source absent">A</span>
-                  }
-                  { data.hasDataInSitu ?
-                  <span title="In situ hybridization: presence" className="tag tag-source present">I</span>
-                  :
-                  <span title="In situ hybridization: absence" className="tag tag-source absent">I</span>
-                  }
-                  { data.hasDataEst ?
-                  <span title="EST: presence" className="tag tag-source present">E</span>
-                  :
-                  <span title="EST: absence" className="tag tag-source absent">E</span>
-                  }
-                </div>
-              </div>
-            <DetailRow label="expressed" value={String(data.isExpressed)} />
-            <DetailRow label="expression score" value={String(data.value)} />
-            <DetailRow label="max. expression" value={String(data.maxExpScore)} />
-            <br/>
-            <a href={`/search/raw-data?pageType=proc_expr_values&gene_id=${data.geneId}&species_id=${data.speciesId}&cell_type_descendant=true&stage_descendant=true&anat_entity_descendant=true&anat_entity_id=${data.anatEntityId}`}>See source data</a>
+          <div style={{position: "relative", left: 10}}>
+            <b>data sources:</b>
           </div>
+          <div className="tags tags-source" style={{position: "relative", left: 10}}>
+            <div className="tags tags-source" style={{width: "110px"}}>
+              { data.hasDataRnaSeq ?
+                <span title="bulk RNA-Seq: presence" className="tag tag-source present">R</span>
+                :
+                <span title="bulk RNA-Seq: absence" className="tag tag-source absent">R</span>
+              }
+              { data.hasDataScRnaSeq ?
+                <span title="scRNA-Seq: presence" className="tag tag-source present">SC</span>
+                :
+                <span title="scRNA-Seq: absence" className="tag tag-source absent">SC</span>
+              }
+              { data.hasDataAffy ?
+                <span title="Affymetrix data: presence" className="tag tag-source present">A</span>
+                :
+                <span title="Affymetrix data: absence" className="tag tag-source absent">A</span>
+              }
+              { data.hasDataInSitu ?
+                <span title="In situ hybridization: presence" className="tag tag-source present">I</span>
+                :
+                <span title="In situ hybridization: absence" className="tag tag-source absent">I</span>
+              }
+              { data.hasDataEst ?
+                <span title="EST: presence" className="tag tag-source present">E</span>
+                :
+                <span title="EST: absence" className="tag tag-source absent">E</span>
+              }
+            </div>
+          </div>
+          <DetailRow label="expressed" value={String(data.isExpressed)} />
+          <DetailRow label="expression score" value={String(data.value)} />
+          <DetailRow label="max. expression" value={String(data.maxExpScore)} />
+          <br/>
+          <a href={`/search/raw-data?pageType=proc_expr_values&gene_id=${data.geneId}&species_id=${data.speciesId}&cell_type_descendant=true&stage_descendant=true&anat_entity_descendant=true&anat_entity_id=${data.anatEntityId}`}>
+            See source data
+          </a>
         </div>
       </div>
+    </div>
   );
 };
 

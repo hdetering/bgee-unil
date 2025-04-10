@@ -325,315 +325,305 @@ export const Heatmap = ({
   }, [isLoading]);
 
   return (
-    <>
-      <div style={{ position: "relative", backgroundColor: bgColor }}>
-
-      <div className="columns">
+    <div className="heatmap-container" style={{ backgroundColor: bgColor }}>
+      <div className="columns is-gapless">
         <div className="column">
-        <Renderer
-          ref={svgRef}
-          width={graphWidth}
-          height={graphHeight - COLOR_LEGEND_HEIGHT}
-          backgroundColor={bgColor}
-          data={displayData}
-          getChildData={getChildData}
-          yTerms={yTerms}
-          drilldown={yTerms}
-          termProps={termProps}
-          hoveredCell={hoveredCell}
-          setHoveredCell={setHoveredCell}
-          clickedCell={clickedCell}
-          setClickedCell={setClickedCell}
-          onToggleExpandCollapse={onToggleExpandCollapse}
-          colorScale={colorScale}
-          marginLeft={marginLeft}
-          xLabelRotation={xLabelRotation}
-          yLabelJustify={yLabelAlign}
-          showLegend={showLegend}
-          showMissingData={showMissingData}
-          showDescMax={showDescMax}
-          colorLegendWidth={200}
-          colorLegendHeight={COLOR_LEGEND_HEIGHT}
-          setGraphWidth={setGraphWidth}
-          setGraphHeight={setGraphHeight}
-        />
+          <Renderer
+            ref={svgRef}
+            width={graphWidth}
+            height={graphHeight - COLOR_LEGEND_HEIGHT}
+            backgroundColor={bgColor}
+            data={displayData}
+            drilldown={yTerms}
+            termProps={termProps}
+            hoveredCell={hoveredCell}
+            setHoveredCell={setHoveredCell}
+            setClickedCell={setClickedCell}
+            onToggleExpandCollapse={onToggleExpandCollapse}
+            colorScale={colorScale}
+            marginLeft={marginLeft}
+            xLabelRotation={xLabelRotation}
+            yLabelJustify={yLabelAlign}
+            showLegend={showLegend}
+            showMissingData={showMissingData}
+            showDescMax={showDescMax}
+            colorLegendWidth={200}
+            colorLegendHeight={COLOR_LEGEND_HEIGHT}
+          />
 
-        <Tooltip
-          interactionData={hoveredCell}
-          width={graphWidth}
-          height={graphHeight - COLOR_LEGEND_HEIGHT}
-        />
-        
-        </div>
-        <div className="column" style={{ position: 'relative', zIndex: 2 }}>
-          <DetailView
-            interactionData={clickedCell}
-            xPos={0}
-            yPos={0}
-            width={500}
-            height={graphHeight}
-            style={{ position: 'relative' }}
+          <Tooltip
+            interactionData={hoveredCell}
+            width={graphWidth}
+            height={graphHeight - COLOR_LEGEND_HEIGHT}
           />
         </div>
-      </div>
-    </div>
 
-    <div className="card"
-      style={{
-        position: 'relative',
-        zIndex: 1,
-      }}
-    >
-      <header className="card-header">
-        <div className="card-header-title is-flex is-align-items-center">
-          <span>Download</span>
-          <span style={{ marginLeft: "10px" }} />
-          <div className="is-flex is-justify-content-flex-end">
-            <Bulma.Button
-              className="download-btn is-small mr-2"
-              onClick={downloadPng}
-              renderAs="a"
-              target="_blank"
-              rel="noreferrer"
-            >
-              PNG
-              <span className="icon is-small ml-1">
-                <ion-icon name="download-outline" />
-              </span>
-            </Bulma.Button>
-
-            <Bulma.Button
-              className="download-btn is-small mr-2"
-              onClick={downloadSvg}
-              renderAs="a"
-              target="_blank"
-              rel="noreferrer"
-            >
-              SVG
-              <span className="icon is-small ml-1">
-                <ion-icon name="download-outline" />
-              </span>
-            </Bulma.Button>
-
-            <Bulma.Button
-              className="download-btn is-small mr-2"
-              onClick={downloadTsv}
-              renderAs="a"
-              target="_blank"
-              rel="noreferrer"
-            >
-              TSV
-              <span className="icon is-small ml-1">
-                <ion-icon name="download-outline" />
-              </span>
-            </Bulma.Button>
+        {clickedCell && (
+          <div className="column is-4">
+            <DetailView
+              interactionData={clickedCell}
+              xPos={0}
+              yPos={0}
+              width={400}
+              style={{
+                position: 'sticky',
+                top: '1rem',
+              }}
+            />
           </div>
+        )}
+      </div>
+
+      {/* Move download and settings cards after the main content */}
+      <div className="mt-4">
+        {/* Existing download card */}
+        <div className="card mb-4" style={{ position: 'relative', zIndex: 1 }}>
+          <header className="card-header">
+            <div className="card-header-title is-flex is-align-items-center">
+              <span>Download</span>
+              <span style={{ marginLeft: "10px" }} />
+              <div className="is-flex is-justify-content-flex-end">
+                <Bulma.Button
+                  className="download-btn is-small mr-2"
+                  onClick={downloadPng}
+                  renderAs="a"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  PNG
+                  <span className="icon is-small ml-1">
+                    <ion-icon name="download-outline" />
+                  </span>
+                </Bulma.Button>
+
+                <Bulma.Button
+                  className="download-btn is-small mr-2"
+                  onClick={downloadSvg}
+                  renderAs="a"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  SVG
+                  <span className="icon is-small ml-1">
+                    <ion-icon name="download-outline" />
+                  </span>
+                </Bulma.Button>
+
+                <Bulma.Button
+                  className="download-btn is-small mr-2"
+                  onClick={downloadTsv}
+                  renderAs="a"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  TSV
+                  <span className="icon is-small ml-1">
+                    <ion-icon name="download-outline" />
+                  </span>
+                </Bulma.Button>
+              </div>
+            </div>
+          </header>
         </div>
-      </header>
-    </div>
 
-    <div className="card"
-      style={{
-        position: 'relative',
-        zIndex: 1,
-      }}
-    >
-      <header className="card-header">
-        <p className="card-header-title">
-          Settings
-          <span style={{ marginLeft: "10px" }} />
-          <a href="#collapsible-settings" data-action="collapse" onClick={updateShowSettings}>
-            {showSettings ? "Collapse" : "Expand"}
-          </a>
-        </p>
-      </header>
+        {/* Existing settings card */}
+        <div className="card" style={{ position: 'relative', zIndex: 1 }}>
+          <header className="card-header">
+            <p className="card-header-title">
+              Settings
+              <span style={{ marginLeft: "10px" }} />
+              <a href="#collapsible-settings" data-action="collapse" onClick={updateShowSettings}>
+                {showSettings ? "Collapse" : "Expand"}
+              </a>
+            </p>
+          </header>
 
-      <div 
-        id="collapsible-settings" 
-        className={`is-collapsible ${showSettings ? "is-active" : ""}`}
-      >
-      {showSettings ? 
-        <div className="card-content">
-          <div className="columns">
-            <div className="column">
-              <h1>DISPLAY</h1>
-              <table>
-                <tbody>
-                  <tr>
-                    <td>Graph width:</td>
-                    <td>
-                      <input 
-                        type="text"
-                        size="10"
-                        value={graphWidth}
-                        onChange={updateGraphWidth}
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Graph height:</td>
-                    <td>
-                      <input 
-                        type="text"
-                        size="10"
-                        value={graphHeight}
-                        onChange={updateGraphHeight}
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Show Legend:</td>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={showLegend}
-                        onChange={updateShowLegend}
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>Y label width:</td>
-                    <td>
-                      <input 
-                        type="text"
-                        size="10"
-                        value={marginLeft}
-                        onChange={updateYLabelWidth}
-                      />
-                    </td>
-                  </tr>
-                  { SHOW_DEBUG_OPTIONS ? (
-                  <tr>
-                    <td>X label rotation:</td>
-                    <td>
-                      <input 
-                        type="text"
-                        size="10"
-                        value={xLabelRotation}
-                        onChange={updateXLabelRotation}
-                      />
-                    </td>
-                  </tr>
-                  ) : null}
-                  { SHOW_DEBUG_OPTIONS ? (
-                  <tr>
-                    <td>Y label justify:</td>
-                    <td>
-                      <select value={yLabelAlign} onChange={updateYLabelAlign}>
-                        <option value="left">left</option>
-                        <option value="right">right</option>
-                      </select>
-                    </td>
-                  </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
-            <div className="column">
-              <h1>STYLE</h1>
-              <table>
-                <tbody>
-                  <tr>
-                    <td>color palette:</td>
-                    <td>
-                      <select value={colorPalette} onChange={updateColorPalette}>
-                          <option value="magma">magma</option>
-                          <option value="inferno">inferno</option>
-                          <option value="plasma">plasma</option>
-                          <option value="viridis">viridis</option>
-                          <option value="cividis">cividis</option>
-                          <option value="rocket">rocket</option>
-                          <option value="mako">mako</option>
-                          <option value="turbo">turbo</option>
-                        </select>
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>adaptive color scale:</td>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={useAdaptiveScale}
-                        onChange={updateUseAdaptiveScale}
-                      />
-                    </td>
-                  </tr>
-                  <tr>
-                    <td>background color:</td>
-                    <td>
-                    <input 
-                        type="text"
-                        size="10"
-                        value={bgColor}
-                        onChange={updateBgColor}
-                      />
-                    </td>
-                  </tr>
-                </tbody>
-                </table>
-            </div>
-            <div className="column">
-              { SHOW_DEBUG_OPTIONS ? (
-                <div>
-                  <h1>DATA</h1>
+          <div 
+            id="collapsible-settings" 
+            className={`is-collapsible ${showSettings ? "is-active" : ""}`}
+          >
+          {showSettings ? 
+            <div className="card-content">
+              <div className="columns">
+                <div className="column">
+                  <h1>DISPLAY</h1>
                   <table>
                     <tbody>
                       <tr>
-                        <td>Show missing data:</td>
+                        <td>Graph width:</td>
                         <td>
-                          <input
-                            type="checkbox"
-                            checked={showMissingData}
-                            onChange={updateShowMissingData}
+                          <input 
+                            type="text"
+                            size="10"
+                            value={graphWidth}
+                            onChange={updateGraphWidth}
                           />
                         </td>
                       </tr>
                       <tr>
-                        <td>Show homologs:</td>
+                        <td>Graph height:</td>
                         <td>
-                          <input
-                            type="checkbox"
-                            checked={showHomologs}
-                            onChange={updateShowHomologs}
+                          <input 
+                            type="text"
+                            size="10"
+                            value={graphHeight}
+                            onChange={updateGraphHeight}
                           />
                         </td>
                       </tr>
-                      
                       <tr>
-                        <td>Show max. descendant score as:</td>
+                        <td>Show Legend:</td>
                         <td>
-                          <select value={showDescMax} onChange={updateShowDescMax}>
-                              <option value="border">border</option>
-                              <option value="center">center</option>
-                              <option value="split">split cell</option>
-                              <option value="none">none</option>
-                            </select>
+                          <input
+                            type="checkbox"
+                            checked={showLegend}
+                            onChange={updateShowLegend}
+                          />
                         </td>
                       </tr>
-                      
+                      <tr>
+                        <td>Y label width:</td>
+                        <td>
+                          <input 
+                            type="text"
+                            size="10"
+                            value={marginLeft}
+                            onChange={updateYLabelWidth}
+                          />
+                        </td>
+                      </tr>
+                      { SHOW_DEBUG_OPTIONS ? (
+                      <tr>
+                        <td>X label rotation:</td>
+                        <td>
+                          <input 
+                            type="text"
+                            size="10"
+                            value={xLabelRotation}
+                            onChange={updateXLabelRotation}
+                          />
+                        </td>
+                      </tr>
+                      ) : null}
+                      { SHOW_DEBUG_OPTIONS ? (
+                      <tr>
+                        <td>Y label justify:</td>
+                        <td>
+                          <select value={yLabelAlign} onChange={updateYLabelAlign}>
+                            <option value="left">left</option>
+                            <option value="right">right</option>
+                          </select>
+                        </td>
+                      </tr>
+                      ) : null}
                     </tbody>
                   </table>
                 </div>
-              ): null
-              }
+                <div className="column">
+                  <h1>STYLE</h1>
+                  <table>
+                    <tbody>
+                      <tr>
+                        <td>color palette:</td>
+                        <td>
+                          <select value={colorPalette} onChange={updateColorPalette}>
+                              <option value="magma">magma</option>
+                              <option value="inferno">inferno</option>
+                              <option value="plasma">plasma</option>
+                              <option value="viridis">viridis</option>
+                              <option value="cividis">cividis</option>
+                              <option value="rocket">rocket</option>
+                              <option value="mako">mako</option>
+                              <option value="turbo">turbo</option>
+                            </select>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>adaptive color scale:</td>
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={useAdaptiveScale}
+                            onChange={updateUseAdaptiveScale}
+                          />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>background color:</td>
+                        <td>
+                        <input 
+                            type="text"
+                            size="10"
+                            value={bgColor}
+                            onChange={updateBgColor}
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                    </table>
+                </div>
+                <div className="column">
+                  { SHOW_DEBUG_OPTIONS ? (
+                    <div>
+                      <h1>DATA</h1>
+                      <table>
+                        <tbody>
+                          <tr>
+                            <td>Show missing data:</td>
+                            <td>
+                              <input
+                                type="checkbox"
+                                checked={showMissingData}
+                                onChange={updateShowMissingData}
+                              />
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>Show homologs:</td>
+                            <td>
+                              <input
+                                type="checkbox"
+                                checked={showHomologs}
+                                onChange={updateShowHomologs}
+                              />
+                            </td>
+                          </tr>
+                          
+                          <tr>
+                            <td>Show max. descendant score as:</td>
+                            <td>
+                              <select value={showDescMax} onChange={updateShowDescMax}>
+                                  <option value="border">border</option>
+                                  <option value="center">center</option>
+                                  <option value="split">split cell</option>
+                                  <option value="none">none</option>
+                                </select>
+                            </td>
+                          </tr>
+                          
+                        </tbody>
+                      </table>
+                    </div>
+                  ): null
+                  }
+                </div>
+              </div>
+              <div className="columns">
+                <div className="column">
+                  <Bulma.Button
+                    className="is-warning is-light is-outlined"
+                    onClick={resetToDefaults}
+                  >
+                    Reset to defaults
+                  </Bulma.Button>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="columns">
-            <div className="column">
-              <Bulma.Button
-                className="is-warning is-light is-outlined"
-                onClick={resetToDefaults}
-              >
-                Reset to defaults
-              </Bulma.Button>
-            </div>
+          : null}
           </div>
         </div>
-      : null}
       </div>
     </div>
-
-    </>
   );
 };
 
