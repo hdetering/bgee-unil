@@ -549,7 +549,7 @@ export const Renderer = forwardRef(({
         {yLabels}
       }
 
-        <g transform={`translate(-${marginLeft-10}, 0)`} >
+        <g transform={`translate(-${marginLeft-10}, 5)`} >
           <Tree
             data={drilldown}
             yScale={yScale}
