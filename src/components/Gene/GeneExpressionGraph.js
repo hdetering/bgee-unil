@@ -500,7 +500,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
   };
 
   const heatmapData = searchResult?.expressionData?.expressionCalls?.map((result) => {
-    const { gId, name: gName } = result.gene;
+    const { geneId: gId, name: gName } = result.gene;
     const specId = result.gene.species.id;
     const { id: anatEntityId, name: anatEntityName } = result.condition.anatEntity;
     const { id: cellTypeId, name: cellTypeName } = result.condition.cellType;
