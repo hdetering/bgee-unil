@@ -366,6 +366,7 @@ const Heatmap = ({
                 position: 'sticky',
                 top: '1rem',
               }}
+              onClose={() => setClickedCell(null)}
             />
           </div>
         )}
