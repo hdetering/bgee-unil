@@ -16,7 +16,8 @@ export const DetailView = ({
   xPos,
   yPos,
   width,
-  style 
+  style,
+  onClose 
 }) => {
 // }: TooltipProps) => { // TypeScript specific
   if (!data) {
@@ -36,6 +37,20 @@ export const DetailView = ({
       }}
     >
       <div className="card">
+        <header className="card-header">
+          <button 
+            type="button"
+            className="delete" 
+            aria-label="close"
+            onClick={onClose}
+            style={{
+              position: 'absolute',
+              right: '1rem',
+              top: '1rem'
+            }}
+          />
+        </header>
+
         <div className="card-content">
           <p className="title">Gene</p>
           <div className="content">
