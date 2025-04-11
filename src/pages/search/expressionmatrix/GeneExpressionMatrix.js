@@ -69,7 +69,6 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
     AutoCompleteByType,
     onSubmit,
     resetForm,
-    triggerSearchChildren,
     triggerHomologSearch,
     addConditionalParam,
     getSearchParams,
@@ -297,7 +296,6 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
               results={results}
               columnDescriptions={columnsDesc}
               searchParams={getSearchParams}
-              triggerSearch={triggerSearchChildren}
               triggerHomologSearch={triggerHomologSearch}
               genes={genes}
               anatomicalTerms={anatomicalTerms}

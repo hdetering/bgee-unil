@@ -39,7 +39,6 @@ export const Heatmap = ({
   height = 800,
   backgroundColor,
   data,
-  getChildData,
   getHomologsData,
   yTerms,
   termProps,

@@ -2,13 +2,10 @@ import { Heatmap } from './components/Heatmap/Heatmap';
 
 const GeneExpressionMatrixResults = ({
   results = [],
-  triggerSearch,
   triggerHomologSearch,
   genes,
   anatomicalTerms,
-  // setAnatomicalTerms,
   anatomicalTermsProps,
-  // setAnatomicalTermsProps,
   maxExpScore,
   onToggleExpandCollapse,
   isLoading,
@@ -62,7 +59,6 @@ const GeneExpressionMatrixResults = ({
       {results?.length > 0 ? (
       <Heatmap
         data = {heatmapData}
-        getChildData = {triggerSearch}
         getHomologsData = {triggerHomologSearch}
         xTerns = {genes}
         yTerms = {anatomicalTerms}
