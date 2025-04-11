@@ -198,7 +198,7 @@ const useLogic = (isExprCalls) => {
   const [hasCellTypeSubStructure, setHasCellTypeSubStructure] = useState(true);
   const [hasTissueSubStructure, setHasTissueSubStructure] = useState(true);
   const [hasDevStageSubStructure, setDevStageSubStructure] = useState(true);
-  const [dataQuality, setDataQuality] = useState(BRONZE);
+  const [dataQuality, setDataQuality] = useState(SILVER);
   const [callTypes, setCallTypes] = useState([NOT_EXPRESSED, EXPRESSED]);
   const [condObserved, setCondObserved] = useState(false);
   const [conditionalParam2, setConditionalParam2] = useState([
@@ -1503,7 +1503,6 @@ const useLogic = (isExprCalls) => {
     onSubmit,
     resetForm,
     triggerSearch,
-    triggerSearchChildren,
     addConditionalParam,
     getSearchParams,
     onToggleExpandCollapse,

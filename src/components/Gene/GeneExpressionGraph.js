@@ -71,6 +71,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
       initSearch,
       pageType: EXPR_CALLS,
       dataType,
+      dataQuality: 'SILVER',
       selectedExpOrAssay: [],
       selectedSpecies: speciesId,
       selectedGene: geneId ? [geneId] : [],

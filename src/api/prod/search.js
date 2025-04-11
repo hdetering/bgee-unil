@@ -616,7 +616,7 @@ const search = {
           //   );
           // } else {
             // params.append('cell_type_id', 'GO:0005575');
-            params.append('cell_type_id', 'SUMMARY');
+          params.append('cell_type_id', 'SUMMARY');
           // }
           params.append('cond_param2', 'anat_entity');
 
@@ -646,6 +646,10 @@ const search = {
           form.selectedGene.forEach((g) =>
             params.append('gene_id', g)
           );
+
+          if (form?.dataQuality) {
+            params.append('data_qual', form?.dataQuality);
+          }
           // [...]
         }
 
@@ -713,6 +717,9 @@ const search = {
             form.selectedGene.forEach((g) =>
               params.append('gene_id', g)
             );
+            if (form?.dataQuality) {
+              params.append('data_qual', form?.dataQuality);
+            }
           }
 
           // [...]
