@@ -2,13 +2,13 @@ import { Heatmap } from './components/Heatmap/Heatmap';
 
 const GeneExpressionMatrixResults = ({
   results = [],
-  triggerHomologSearch,
   genes,
   anatomicalTerms,
   anatomicalTermsProps,
   maxExpScore,
   onToggleExpandCollapse,
   isLoading,
+  isFirstSearch
 }) => {
   // console.log(`[GeneExpressionMatrixResults] results:\n${JSON.stringify(results, null, 2)}`);
   // console.log(`[GeneExpressionMatrixResults] anatomicalTerms:\n${JSON.stringify(anatomicalTerms, null, 2)}`);
@@ -56,27 +56,31 @@ const GeneExpressionMatrixResults = ({
 
   return (
     <>
-      {results?.length > 0 ? (
-      <Heatmap
-        data = {heatmapData}
-        getHomologsData = {triggerHomologSearch}
-        xTerns = {genes}
-        yTerms = {anatomicalTerms}
-        // setYTerms = {setAnatomicalTerms}
-        termProps = {anatomicalTermsProps}
-        // setTermProps = {setAnatomicalTermsProps}
-        onToggleExpandCollapse = {onToggleExpandCollapse}
-        width = {800}
-        height = {800}
-        backgroundColor = 'white'
-        isLoading={isLoading}
-      />
-      ) : (
+      {results?.length > 0 && (
+        <Heatmap
+          data={heatmapData}
+          xTerns={genes}
+          yTerms={anatomicalTerms}
+          // setYTerms={setAnatomicalTerms}
+          termProps={anatomicalTermsProps}
+          // setTermProps={setAnatomicalTermsProps}
+          onToggleExpandCollapse={onToggleExpandCollapse}
+          width={800}
+          height={800}
+          backgroundColor='white'
+          isLoading={isLoading}
+        />
+      )}
+      { isFirstSearch && (
         <div className="is-flex is-justify-content-center mt-3">
           Please select search criteria above to display results.
         </div>
       )}
-
+      {!isFirstSearch && results?.length === 0 && (
+        <div className="is-flex is-justify-content-center mt-3">
+          No results found.
+        </div>
+      )}
     </>
   );
 };

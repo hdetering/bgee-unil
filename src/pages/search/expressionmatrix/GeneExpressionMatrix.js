@@ -48,6 +48,7 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
     speciesSexes,
     selectedSexes,
     isLoading,
+    isFirstSearch,
     dataTypesExpCalls,
     dataQuality,
     callTypes,
@@ -69,7 +70,6 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
     AutoCompleteByType,
     onSubmit,
     resetForm,
-    triggerHomologSearch,
     addConditionalParam,
     getSearchParams,
     onToggleExpandCollapse,
@@ -296,13 +296,13 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
               results={results}
               columnDescriptions={columnsDesc}
               searchParams={getSearchParams}
-              triggerHomologSearch={triggerHomologSearch}
               genes={genes}
               anatomicalTerms={anatomicalTerms}
               anatomicalTermsProps={anatomicalTermsProps}
               maxExpScore={maxExpScore}
               onToggleExpandCollapse={onToggleExpandCollapse}
               isLoading={isLoading}
+              isFirstSearch={isFirstSearch}
             />
           </div>
           <UserFeedback />
