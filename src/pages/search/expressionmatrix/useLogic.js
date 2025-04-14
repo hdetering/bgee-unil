@@ -1470,6 +1470,7 @@ const useLogic = (isExprCalls) => {
     speciesSexes,
     selectedSexes,
     isLoading,
+    isFirstSearch,
     filters,
     dataTypesExpCalls,
     dataQuality,
