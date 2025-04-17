@@ -20,7 +20,7 @@ import config from '../../config.json';
 
 const GeneDetails = ({
   details,
-  details: { name, geneId, description, species, synonyms, geneMappedToSameGeneIdCount },
+  details: { name, geneId, description, expressionSummary, species, synonyms, geneMappedToSameGeneIdCount },
 }) => {
   const loc = useLocation();
   const [isLoading, setIsLoading] = React.useState(true);
@@ -141,6 +141,7 @@ const GeneDetails = ({
             </div>
           </div>
           <div id={GENE_DETAILS_HTML_IDS.GENERAL_INFORMATION}>
+            <p className="has-text-weight-bold">{expressionSummary ? `${expressionSummary}` : 'this is a Test!'}</p>
             <Bulma.Title size={4} className="gradient-underline" renderAs="h2">
               General information
             </Bulma.Title>
