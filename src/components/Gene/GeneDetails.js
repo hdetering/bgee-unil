@@ -17,6 +17,7 @@ import imagePath from '../../helpers/imagePath';
 import GeneDetailsSideMenu from './GeneDetailsSideMenu';
 import { PROC_EXPR_VALUES } from '../../pages/search/rawdata/useLogic';
 import config from '../../config.json';
+import './GeneDetails.scss';
 
 const GeneDetails = ({
   details,
@@ -141,10 +142,10 @@ const GeneDetails = ({
             </div>
           </div>
           <div id={GENE_DETAILS_HTML_IDS.GENERAL_INFORMATION}>
-            <p className="has-text-weight-bold">{expressionSummary ? `${expressionSummary}` : 'this is a Test!'}</p>
             <Bulma.Title size={4} className="gradient-underline" renderAs="h2">
               General information
             </Bulma.Title>
+            { expressionSummary?.trim() && <p className="summary has-text-weight-bold">{expressionSummary}</p> }
             <div className="near-columns">
               <Bulma.Columns className="my-0">
                 <Bulma.C size={3}>
