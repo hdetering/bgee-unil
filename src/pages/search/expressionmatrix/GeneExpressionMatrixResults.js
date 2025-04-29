@@ -27,8 +27,7 @@ const GeneExpressionMatrixResults = ({
     const isExpressed = result.expressionState === 'expressed';
 
     const row =  {
-      x: geneName,
-      // y: termName,
+      x: geneName?.length > 0 ? geneName : geneId,
       y: termId,
       termId,
       termName,

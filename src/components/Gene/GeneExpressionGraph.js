@@ -511,7 +511,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
     const isExpressed = result.expressionState === 'expressed';
 
     return {
-      x: gName,
+      x: gName?.length > 0 ? gName : gId,
       y: termId,
       termId,
       termName,
