@@ -36,14 +36,14 @@ const ExpressionComparisonCellHomologs = ({ query }) => (
     Compare expression
   </Link>
 );
-const ExpressionComparisonCellParalogs = ({ query }) => (
+const ExpressionComparisonCellParalogs = ({ query, speciesId }) => (
   <p>
     <span>Compare expression: </span>
       <Link to={`${PATHS.ANALYSIS.EXPRESSION_COMPARISON}?${query}`} rel="nofollow">
         table
       </Link>
     <span> | </span>
-    <Link to={`${PATHS.SEARCH.EXPRESSION_MATRIX}?${query}`} rel="nofollow">
+    <Link to={`${PATHS.SEARCH.EXPRESSION_MATRIX}?species_id=${speciesId}&${query}`} rel="nofollow">
       graph
     </Link>
   </p>
@@ -140,7 +140,7 @@ const SpeciesCell = ({ genes }) => {
   );
 };
 
-const GeneHomologs = ({ homologs, geneId, isLoading }) => {
+const GeneHomologs = ({ homologs, geneId, speciesId, isLoading }) => {
   const onRenderCell = React.useCallback(
     ({ cell, key }, defaultRender, { expandAction }) => {
       switch (key) {
@@ -158,6 +158,7 @@ const GeneHomologs = ({ homologs, geneId, isLoading }) => {
             <ExpressionComparisonCellParalogs
               key={key}
               query={cell.storableParams?.queryString}
+              speciesId={speciesId}
             />
           );
         case 'details':

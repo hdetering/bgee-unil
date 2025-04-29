@@ -249,6 +249,7 @@ const GeneDetails = ({
           <GeneHomologs
             homologs={homologs}
             geneId={geneId}
+            speciesId={species.id}
             isLoading={isLoading}
           />
           {xRefs && <GeneXRefs data={xRefs} isLoading={isLoading} />}

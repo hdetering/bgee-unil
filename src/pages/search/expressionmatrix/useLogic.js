@@ -1210,13 +1210,13 @@ const useLogic = (isExprCalls) => {
         const simpleParams = resp1.resp.requestParameters;
         
         // Check for gene_list first before processing other parameters
-        if (simpleParams.gene_list) {
+        if (simpleParams.gene_list && simpleParams.species_id) {
           // Join array items with newlines and encode for URL
           const encodedGeneList = simpleParams.gene_list.join('%0A');
           // Redirect to same page with gene_list parameter
           history.replace({
             pathname: loc.pathname,
-            search: `?gene_list=${encodedGeneList}`
+            search: `?species_id=${simpleParams.species_id}&gene_list=${encodedGeneList}`
           });
           return; // Exit the entire function
         }
@@ -1299,9 +1299,9 @@ const useLogic = (isExprCalls) => {
 
     const searchParams = new URLSearchParams(loc.search);
     const geneList = searchParams.get('gene_list');
-
+    const speciesId = searchParams.get('species_id');
     if (geneList) {
-      processGeneList(geneList);
+      processGeneList(geneList, speciesId);
     } else if(!loc.search && !isFirstSearch && !isLoading) {
       resetForm(false, true);
     } else if (loc.search?.length > 0 && !isInitializingFromUrl && !isProcessingGeneList) {
@@ -1384,63 +1384,112 @@ const useLogic = (isExprCalls) => {
   };
 
   // Add function to process gene list
-  const processGeneList = async (geneListParam) => {
+  const processGeneList = async (geneListParam, speciesId) => {
     if (!geneListParam) return;
 
     setIsProcessingGeneList(true);
     const geneIds = geneListParam.split(/[\r\n]+/);
 
     try {
-      // Get search results for all genes
-      const searchResults = await Promise.all(
-        geneIds.map(geneId =>
-          api.search.genes.geneSearchResult(geneId)
-        )
-      );
-
-      // Process results
-      const validResults = searchResults.filter(result =>
-        result.code === 200 &&
-        result.data.result.totalMatchCount === 1
-      );
-
-      if (validResults.length === 0) {
-        console.error('No valid gene matches found');
-        return;
-      }
-
-      // Get first gene's species
-      const firstSpecies = validResults[0].data.result.geneMatches[0].gene.species;
-
-      // Verify all genes are from same species
-      const allSameSpecies = validResults.every(result =>
-        result.data.result.geneMatches[0].gene.species.id === firstSpecies.id
-      );
-
-      if (!allSameSpecies) {
-        console.error('Genes must all be from the same species');
-        return;
-      }
-
-      // Set species
-      const speciesValue = {
-        label: getSpeciesLabel(firstSpecies),
-        value: firstSpecies.id
+      const params = {
+        hash: initHash,
+        isFirstSearch,
+        initSearch,
+        pageType,
+        dataType: [dataType],
+        selectedExpOrAssay: selectedExpOrAssay.map((exp) => exp.value),
+        selectedSpecies: speciesId,
+        selectedCellTypes: selectedCellTypes.map((ct) => ct.value),
+        selectedGene: geneIds,
+        selectedStrain: selectedStrain.map((s) => s.value),
+        selectedTissue: selectedTissue.map((t) => t.value),
+        selectedDevStages: selectedDevStages.map((ds) => ds.value),
+        selectedSexes: selectedSexes.length > 0 ? selectedSexes : ['all'],
+        hasCellTypeSubStructure,
+        hasDevStageSubStructure,
+        hasTissueSubStructure,
       };
+      console.log(`[useLogic] params:\n${JSON.stringify(params, null, 2)}`);
+      api.search.geneExpressionMatrix
+        .getRequestParams(params, true)
+        .then((resp) => {
+          if (resp.resp.code === 200) {
+            // console.log(`[useLogic] searchResults:\n${JSON.stringify(resp, null, 2)}`);
+            const { requestDetails } = resp.resp.data;
+            const {
+              requestedSpecies,
+              requestedGenes,
+            } = requestDetails;
+            
+            // Update state with species and genes
+            setIsInitializingFromUrl(true);
+            const s = {
+              label: getSpeciesLabel(requestedSpecies),
+              value: requestedSpecies.id,
+            }
+            console.log(`[useLogic] CALL setSelectedSpeciesFromUrl...\n${JSON.stringify(s, null, 2)}`);
+            setSelectedSpeciesFromUrl({
+              label: getSpeciesLabel(requestedSpecies),
+              value: requestedSpecies.id,
+            });
+            setSelectedGene(requestedGenes.map(gene => ({
+              label: getGeneLabel(gene),
+              value: gene.geneId,
+            })));
+          }
+        });
+      
+      // // Get search results for all genes
+      // const searchResults = await Promise.all(
+      //   geneIds.map(geneId =>
+      //     api.search.genes.geneSearchResult(geneId)
+      //   )
+      // );
 
-      // Set genes
-      const genes = validResults.map(result => {
-        const { gene } = result.data.result.geneMatches[0];
-        return {
-          label: getGeneLabel(gene),
-          value: gene.geneId
-        };
-      });
+      // // Process results
+      // const validResults = searchResults.filter(result =>
+      //   result.code === 200 &&
+      //   result.data.result.totalMatchCount === 1
+      // );
+
+      // if (validResults.length === 0) {
+      //   console.error('No valid gene matches found');
+      //   return;
+      // }
+
+      // // Get first gene's species
+      // const firstSpecies = validResults[0].data.result.geneMatches[0].gene.species;
+
+      // // Verify all genes are from same species
+      // const allSameSpecies = validResults.every(result =>
+      //   result.data.result.geneMatches[0].gene.species.id === firstSpecies.id
+      // );
+
+      // if (!allSameSpecies) {
+      //   console.error('Genes must all be from the same species');
+      //   return;
+      // }
+
+      // ------------------------------------------------------------
+      // // Set species
+      // const speciesValue = {
+      //   label: getSpeciesLabel(firstSpecies),
+      //   value: firstSpecies.id
+      // };
+
+      // // Set genes
+      // const genes = validResults.map(result => {
+      //   const { gene } = result.data.result.geneMatches[0];
+      //   return {
+      //     label: getGeneLabel(gene),
+      //     value: gene.geneId
+      //   };
+      // });
 
       // Update state with species and genes
       setIsInitializingFromUrl(true);
-      setSelectedSpeciesFromUrl(speciesValue);
-      setSelectedGene(genes);
+      // setSelectedSpeciesFromUrl(speciesValue);
+      // setSelectedGene(genes);
 
     } catch (error) {
       console.error('Error processing gene list:', error);
