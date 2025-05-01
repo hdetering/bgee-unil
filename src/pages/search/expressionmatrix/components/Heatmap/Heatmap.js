@@ -55,10 +55,8 @@ export const Heatmap = ({
     getStoredValue(STORAGE_KEYS.X_LABEL_ROTATION, 325));
   const [yLabelAlign, setYLabelAlign] = useState(() => 
     getStoredValue(STORAGE_KEYS.Y_LABEL_ALIGN, yLabelJustify));
-  const [graphWidth, setGraphWidth] = useState(() => 
-    getStoredValue(STORAGE_KEYS.GRAPH_WIDTH, width));
-  const [graphHeight, setGraphHeight] = useState(() => 
-    getStoredValue(STORAGE_KEYS.GRAPH_HEIGHT, height));
+  const [graphWidth, setGraphWidth] = useState(width);
+  const [graphHeight, setGraphHeight] = useState(height);
   const [colorPalette, setColorPalette] = useState(() => 
     getStoredValue(STORAGE_KEYS.COLOR_PALETTE, 'viridis'));
   const [bgColor, setBgColor] = useState(() => 
