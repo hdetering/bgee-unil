@@ -1409,7 +1409,7 @@ const useLogic = (isExprCalls) => {
         hasDevStageSubStructure,
         hasTissueSubStructure,
       };
-      console.log(`[useLogic] params:\n${JSON.stringify(params, null, 2)}`);
+      // console.log(`[useLogic] params:\n${JSON.stringify(params, null, 2)}`);
       api.search.geneExpressionMatrix
         .getRequestParams(params, true)
         .then((resp) => {
