@@ -72,17 +72,41 @@ export const Heatmap = ({
   const [useAdaptiveScale, setUseAdaptiveScale] = useState(() => 
     getStoredValue(STORAGE_KEYS.USE_ADAPTIVE_SCALE, false));
 
+  // Add state to track input values during editing
+  const [graphWidthInput, setGraphWidthInput] = useState(graphWidth);
+  const [graphHeightInput, setGraphHeightInput] = useState(graphHeight);
+
   // handle display property changes
   const updateGraphWidth = (event) => {
     const { value } = event.target;
     setGraphWidth(value);
     localStorage.setItem(STORAGE_KEYS.GRAPH_WIDTH, value);
   }
-  const updateGraphHeight = (event) => {
+
+  // Update local input state without updating the actual graphWidth
+  const handleGraphWidthChange = (event) => {
+    setGraphWidthInput(event.target.value);
+  }
+
+  // Update the actual graphWidth and localStorage on blur
+  const handleGraphWidthBlur = (event) => {
+    const { value } = event.target;
+    setGraphWidth(value);
+    localStorage.setItem(STORAGE_KEYS.GRAPH_WIDTH, value);
+  }
+
+  // Update local input state without updating the actual graphHeight
+  const handleGraphHeightChange = (event) => {
+    setGraphHeightInput(event.target.value);
+  }
+
+  // Update the actual graphHeight and localStorage on blur
+  const handleGraphHeightBlur = (event) => {
     const { value } = event.target;
     setGraphHeight(value);
     localStorage.setItem(STORAGE_KEYS.GRAPH_HEIGHT, value);
   }
+
   const updateShowLegend = () => {
     const value = !showLegend;
     setShowLegend(value);
@@ -321,6 +345,12 @@ export const Heatmap = ({
     }
   }, [isLoading]);
 
+  // Update useEffect to sync input values when graphWidth/graphHeight change
+  useEffect(() => {
+    setGraphWidthInput(graphWidth);
+    setGraphHeightInput(graphHeight);
+  }, [graphWidth, graphHeight]);
+
   return (
     <div className="heatmap-container" style={{ backgroundColor: bgColor }}>
       <div className="columns is-gapless">
@@ -454,8 +484,9 @@ export const Heatmap = ({
                           <input 
                             type="text"
                             size="10"
-                            value={graphWidth}
-                            onChange={updateGraphWidth}
+                            value={graphWidthInput}
+                            onChange={handleGraphWidthChange}
+                            onBlur={handleGraphWidthBlur}
                           />
                         </td>
                       </tr>
@@ -465,8 +496,9 @@ export const Heatmap = ({
                           <input 
                             type="text"
                             size="10"
-                            value={graphHeight}
-                            onChange={updateGraphHeight}
+                            value={graphHeightInput}
+                            onChange={handleGraphHeightChange}
+                            onBlur={handleGraphHeightBlur}
                           />
                         </td>
                       </tr>
