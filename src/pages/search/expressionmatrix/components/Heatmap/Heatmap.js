@@ -57,6 +57,8 @@ export const Heatmap = ({
     getStoredValue(STORAGE_KEYS.Y_LABEL_ALIGN, yLabelJustify));
   const [graphWidth, setGraphWidth] = useState(width);
   const [graphHeight, setGraphHeight] = useState(height);
+  // outer width, if graphWidth > maxGraphWidth -> scale SVG down
+  const [maxGraphWidth, setMaxGraphWidth] = useState(1500);
   const [colorPalette, setColorPalette] = useState(() => 
     getStoredValue(STORAGE_KEYS.COLOR_PALETTE, 'viridis'));
   const [bgColor, setBgColor] = useState(() => 
@@ -73,7 +75,7 @@ export const Heatmap = ({
     getStoredValue(STORAGE_KEYS.USE_ADAPTIVE_SCALE, false));
 
   // Add state to track input values during editing
-  const [graphWidthInput, setGraphWidthInput] = useState(graphWidth);
+  const [graphWidthInput, setGraphWidthInput] = useState(maxGraphWidth);
   const [graphHeightInput, setGraphHeightInput] = useState(graphHeight);
 
   // handle display property changes
@@ -91,7 +93,7 @@ export const Heatmap = ({
   // Update the actual graphWidth and localStorage on blur
   const handleGraphWidthBlur = (event) => {
     const { value } = event.target;
-    setGraphWidth(value);
+    setMaxGraphWidth(value);
     localStorage.setItem(STORAGE_KEYS.GRAPH_WIDTH, value);
   }
 
@@ -347,7 +349,7 @@ export const Heatmap = ({
 
   // Update useEffect to sync input values when graphWidth/graphHeight change
   useEffect(() => {
-    setGraphWidthInput(graphWidth);
+    setGraphWidthInput(maxGraphWidth);
     setGraphHeightInput(graphHeight);
   }, [graphWidth, graphHeight]);
 
@@ -376,6 +378,7 @@ export const Heatmap = ({
             showDescMax={showDescMax}
             colorLegendWidth={200}
             colorLegendHeight={COLOR_LEGEND_HEIGHT}
+            maxGraphWidth={maxGraphWidth}
             setGraphWidth={setGraphWidth}
           />
 

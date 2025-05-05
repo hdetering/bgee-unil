@@ -31,6 +31,7 @@ export const Renderer = forwardRef(({
   colorLegendHeight,
   minCellWidth = 20,
   minCellHeight = 10,
+  maxGraphWidth = 1500,
   setGraphWidth,
 }, ref) => {
   // The bounds (=area inside the axis) is calculated by substracting the margins
@@ -482,85 +483,94 @@ export const Renderer = forwardRef(({
   const colorLegendPosY = height;
 
   return (
-    <svg ref={ref} width={width} height={height + colorLegendHeight} style={{ backgroundColor }}>
-      <defs>
-        <style>{`
-          @font-face {
-            font-family: 'Open Sans';
-            src: url('data:application/font-woff;charset=utf-8;base64,${fonts.openSansWoff}') format('woff');
-            font-weight: normal;
-            font-style: normal;
-          }
-          @font-face {
-            font-family: 'Spectral Regular';
-            src: url('data:application/font-woff;charset=utf-8;base64,${fonts.spectralRegularWoff}') format('woff');
-            font-weight: normal;
-            font-style: normal;
-          }
-        `}</style>
-        <linearGradient id="colorLegendGradient">
-          {colorLegendStops}
-        </linearGradient>
-      </defs>
-      <g
-        width={boundsWidth}
-        height={boundsHeight}
-        transform={`translate(${[marginLeft, MARGIN.top].join(",")})`}
+    <div style={{ width: '100%', overflow: 'hidden' }}>
+      <svg 
+        ref={ref} 
+        width={Math.min(width, maxGraphWidth)} 
+        height={height + colorLegendHeight} 
+        style={{ backgroundColor }}
+        viewBox={`0 0 ${width} ${height + colorLegendHeight}`}
+        preserveAspectRatio="xMidYMid meet"
       >
-        {allShapes}
-        {xLabelsTop}
-        {xLabelsBottom}
-      {false &&
-        {yLabels}
-      }
+        <defs>
+          <style>{`
+            @font-face {
+              font-family: 'Open Sans';
+              src: url('data:application/font-woff;charset=utf-8;base64,${fonts.openSansWoff}') format('woff');
+              font-weight: normal;
+              font-style: normal;
+            }
+            @font-face {
+              font-family: 'Spectral Regular';
+              src: url('data:application/font-woff;charset=utf-8;base64,${fonts.spectralRegularWoff}') format('woff');
+              font-weight: normal;
+              font-style: normal;
+            }
+          `}</style>
+          <linearGradient id="colorLegendGradient">
+            {colorLegendStops}
+          </linearGradient>
+        </defs>
+        <g
+          width={boundsWidth}
+          height={boundsHeight}
+          transform={`translate(${[marginLeft, MARGIN.top].join(",")})`}
+        >
+          {allShapes}
+          {xLabelsTop}
+          {xLabelsBottom}
+        {false &&
+          {yLabels}
+        }
 
-        <g transform={`translate(-${marginLeft-10}, 5)`} >
-          <Tree
-            data={drilldown}
-            yScale={yScale}
-            toggleCollapse={onToggleExpandCollapse}
-            labelFont='Open Sans'
-         />
+          <g transform={`translate(-${marginLeft-10}, 5)`} >
+            <Tree
+              data={drilldown}
+              yScale={yScale}
+              toggleCollapse={onToggleExpandCollapse}
+              labelFont='Open Sans'
+           />
+          </g>
+
+          <g transform={`translate(-${marginLeft-50}, 0)`} >
+            {
+              showLegend ? 
+              <g>
+                <ColorLegendSvg
+                  posX={colorLegendPosX}
+                  posY={colorLegendPosY - 50}
+                  width={colorLegendWidth}
+                  height={colorLegendHeight}
+                  colorScale={colorScale}
+                  interactionData={hoveredCell}
+                />
+              </g>
+              : null
+            }
+
+            {
+              showLegend ?
+              <g>
+                <text
+                  id="txtSecondaryLegend"
+                  x={colorLegendPosX + colorLegendWidth + 25}
+                  y={colorLegendPosY + colorLegendBoundsHeight}
+                  dominantBaseline="middle"
+                  fontSize={15}
+                  fontFamily="sans"
+                >
+                  { showDescMax === 'border' ? 'Border color: max. expression score' : null }
+                  { showDescMax === 'center' ? 'Central dot: max. expression score' : null }
+                  { showDescMax === 'split'  ? 'Right part of cell: max. expression score' : null }
+
+                </text>
+              </g>
+              : null
+            }
+          </g>
         </g>
-
-        <g transform={`translate(-${marginLeft-50}, 0)`} >
-          {
-            showLegend ? 
-            <g>
-              <ColorLegendSvg
-                posX={colorLegendPosX}
-                posY={colorLegendPosY - 50}
-                width={colorLegendWidth}
-                height={colorLegendHeight}
-                colorScale={colorScale}
-                interactionData={hoveredCell}
-              />
-            </g>
-            : null
-          }
-
-          {
-            showLegend ?
-            <g>
-              <text
-                id="txtSecondaryLegend"
-                x={colorLegendPosX + colorLegendWidth + 25}
-                y={colorLegendPosY + colorLegendBoundsHeight}
-                dominantBaseline="middle"
-                fontSize={15}
-                fontFamily="sans"
-              >
-                { showDescMax === 'border' ? 'Border color: max. expression score' : null }
-                { showDescMax === 'center' ? 'Central dot: max. expression score' : null }
-                { showDescMax === 'split'  ? 'Right part of cell: max. expression score' : null }
-
-              </text>
-            </g>
-            : null
-          }
-        </g>
-      </g>
-    </svg>
+      </svg>
+    </div>
   );
 });
 
