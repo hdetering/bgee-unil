@@ -17,10 +17,11 @@ import imagePath from '../../helpers/imagePath';
 import GeneDetailsSideMenu from './GeneDetailsSideMenu';
 import { PROC_EXPR_VALUES } from '../../pages/search/rawdata/useLogic';
 import config from '../../config.json';
+import './GeneDetails.scss';
 
 const GeneDetails = ({
   details,
-  details: { name, geneId, description, species, synonyms, geneMappedToSameGeneIdCount },
+  details: { name, geneId, description, expressionSummary, species, synonyms, geneMappedToSameGeneIdCount },
 }) => {
   const loc = useLocation();
   const [isLoading, setIsLoading] = React.useState(true);
@@ -144,6 +145,7 @@ const GeneDetails = ({
             <Bulma.Title size={4} className="gradient-underline" renderAs="h2">
               General information
             </Bulma.Title>
+            { expressionSummary?.trim() && <p className="summary has-text-weight-bold">{expressionSummary}</p> }
             <div className="near-columns">
               <Bulma.Columns className="my-0">
                 <Bulma.C size={3}>
