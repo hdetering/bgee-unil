@@ -29,6 +29,7 @@ export const Renderer = forwardRef(({
   showDescMax,
   colorLegendWidth,
   colorLegendHeight,
+  maxCellWidth,
   minCellWidth = 20,
   minCellHeight = 10,
   setGraphWidth,
@@ -104,16 +105,16 @@ export const Renderer = forwardRef(({
   const yTermsOrderedCopy = JSON.parse(JSON.stringify(yTermsOrdered));
   const yLblOrdered = yTermsOrderedCopy;
 
-
-
   // const allYGroups = useMemo(() => [...new Set(dataShow.map((d) => d.y))], [dataShow]);
   const allXGroups = useMemo(() => [...new Set(dataShow.map((d) => d.x))], [dataShow]);
   // const allYGroups = useMemo(() => [...new Set(yLblOrdered.map((d) => d.label))], [yLblOrdered]);
   const allYGroups = useMemo(() => [...new Set(yLblOrdered.map((d) => d.id))], [yLblOrdered]);
 
   const xScale = useMemo(() => {
+    const cellWidth = Math.max(maxCellWidth, minCellWidth);
+    console.log(`[Renderer] cellWidth: ${cellWidth}`);
     // Calculate required width based on minimum cell width, including 4px margin
-    const requiredWidth = allXGroups.length * (minCellWidth + 4);
+    const requiredWidth = allXGroups.length * (cellWidth + 4);
     if (requiredWidth > boundsWidth) {
       // Update graph width if needed
       setGraphWidth(requiredWidth + MARGIN.right + marginLeft);
@@ -121,10 +122,10 @@ export const Renderer = forwardRef(({
 
     return d3
       .scaleBand()
-      .range([0, Math.max(boundsWidth, requiredWidth)])
+      .range([0, requiredWidth])
       .domain(allXGroups)
       .padding(0.01);
-  }, [dataShow, width, minCellWidth, allXGroups, boundsWidth, marginLeft, setGraphWidth]);
+  }, [dataShow, width, maxCellWidth, minCellWidth, allXGroups, boundsWidth, marginLeft, setGraphWidth]);
 
   const yScale = useMemo(() => {
     // Calculate required height based on minimum cell height, including 4px margin

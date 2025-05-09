@@ -13,6 +13,7 @@ const STORAGE_KEYS = {
   USE_ADAPTIVE_SCALE: 'bgee-heatmap-adaptive-scale',
   GRAPH_WIDTH: 'bgee-heatmap-graph-width',
   GRAPH_HEIGHT: 'bgee-heatmap-graph-height',
+  CELL_WIDTH: 'bgee-heatmap-cell-width',
   SHOW_LEGEND: 'bgee-heatmap-show-legend',
   MARGIN_LEFT: 'bgee-heatmap-margin-left',
   X_LABEL_ROTATION: 'bgee-heatmap-x-label-rotation',
@@ -21,7 +22,6 @@ const STORAGE_KEYS = {
   BACKGROUND_COLOR: 'bgee-heatmap-background-color',
   SHOW_DESC_MAX: 'bgee-heatmap-show-desc-max',
   SHOW_MISSING_DATA: 'bgee-heatmap-show-missing-data',
-  SHOW_HOMOLOGS: 'bgee-heatmap-show-homologs',
   SHOW_SETTINGS: 'bgee-heatmap-show-settings'
 };
 
@@ -42,7 +42,6 @@ const Heatmap = ({
   backgroundColor,
   data,
   getChildData,
-  getHomologsData,
   yTerms,
   termProps,
   yLabelJustify = 'right',
@@ -61,6 +60,8 @@ const Heatmap = ({
     getStoredValue(STORAGE_KEYS.GRAPH_WIDTH, width));
   const [graphHeight, setGraphHeight] = useState(() => 
     getStoredValue(STORAGE_KEYS.GRAPH_HEIGHT, height));
+  const [cellWidth, setCellWidth] = useState(() => 
+    getStoredValue(STORAGE_KEYS.CELL_WIDTH, 50));
   const [colorPalette, setColorPalette] = useState(() => 
     getStoredValue(STORAGE_KEYS.COLOR_PALETTE, 'viridis'));
   const [bgColor, setBgColor] = useState(() => 
@@ -71,8 +72,6 @@ const Heatmap = ({
     getStoredValue(STORAGE_KEYS.SHOW_DESC_MAX, 'none'));
   const [showMissingData, setShowMissingData] = useState(() => 
     getStoredValue(STORAGE_KEYS.SHOW_MISSING_DATA, true));
-  const [showHomologs, setShowHomologs] = useState(() => 
-    getStoredValue(STORAGE_KEYS.SHOW_HOMOLOGS, false));
   const [showSettings, setShowSettings] = useState(() => 
     getStoredValue(STORAGE_KEYS.SHOW_SETTINGS, false));
   const [useAdaptiveScale, setUseAdaptiveScale] = useState(() => 
@@ -123,6 +122,12 @@ const Heatmap = ({
     localStorage.setItem(STORAGE_KEYS.GRAPH_HEIGHT, JSON.stringify(value));
   };
 
+  // handle display property changes
+  const updateCellWidth = ({ target: { value } }) => {
+    setCellWidth(value);
+    localStorage.setItem(STORAGE_KEYS.CELL_WIDTH, JSON.stringify(value));
+  };
+
   const updateShowLegend = () => {
     const value = !showLegend;
     setShowLegend(value);
@@ -168,13 +173,6 @@ const Heatmap = ({
     const value = !showMissingData;
     setShowMissingData(value);
     localStorage.setItem(STORAGE_KEYS.SHOW_MISSING_DATA, JSON.stringify(value));
-  }
-
-  const updateShowHomologs = () => {
-    const value = !showHomologs;
-    setShowHomologs(value);
-    localStorage.setItem(STORAGE_KEYS.SHOW_HOMOLOGS, JSON.stringify(value));
-    getHomologsData();
   }
 
   const updateShowSettings = () => {
@@ -346,6 +344,7 @@ const Heatmap = ({
             showDescMax={showDescMax}
             colorLegendWidth={200}
             colorLegendHeight={COLOR_LEGEND_HEIGHT}
+            maxCellWidth={cellWidth}
           />
 
           <Tooltip
@@ -473,6 +472,17 @@ const Heatmap = ({
                       </td>
                     </tr>
                     <tr>
+                      <td>Cell width:</td>
+                      <td>
+                        <input 
+                          type="text"
+                          size="10"
+                          value={cellWidth}
+                          onChange={updateCellWidth}
+                        />
+                      </td>
+                    </tr>
+                    <tr>
                       <td>Show Legend:</td>
                       <td>
                         <input
@@ -579,17 +589,6 @@ const Heatmap = ({
                             />
                           </td>
                         </tr>
-                        <tr>
-                          <td>Show homologs:</td>
-                          <td>
-                            <input
-                              type="checkbox"
-                              checked={showHomologs}
-                              onChange={updateShowHomologs}
-                            />
-                          </td>
-                        </tr>
-                        
                         <tr>
                           <td>Show max. descendant score as:</td>
                           <td>
