@@ -1276,7 +1276,7 @@ const useLogic = (isExprCalls) => {
     } catch (error) {
       console.error('[initFromUrlParams] Error:', error);
     } finally {
-      setIsInitializingFromUrl(false);
+      // setIsInitializingFromUrl(false);
     }
   };
 
