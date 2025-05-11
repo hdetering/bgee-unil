@@ -78,13 +78,6 @@ export const Heatmap = ({
   const [graphWidthInput, setGraphWidthInput] = useState(maxGraphWidth);
   const [graphHeightInput, setGraphHeightInput] = useState(graphHeight);
 
-  // handle display property changes
-  const updateGraphWidth = (event) => {
-    const { value } = event.target;
-    setGraphWidth(value);
-    localStorage.setItem(STORAGE_KEYS.GRAPH_WIDTH, value);
-  }
-
   // Update local input state without updating the actual graphWidth
   const handleGraphWidthChange = (event) => {
     setGraphWidthInput(event.target.value);
