@@ -32,6 +32,7 @@ export const Renderer = forwardRef(({
   maxCellWidth,
   minCellWidth = 20,
   minCellHeight = 10,
+  maxGraphWidth = 1000,
   setGraphWidth,
 }, ref) => {
   // The bounds (=area inside the axis) is calculated by substracting the margins
@@ -112,7 +113,6 @@ export const Renderer = forwardRef(({
 
   const xScale = useMemo(() => {
     const cellWidth = Math.max(maxCellWidth, minCellWidth);
-    console.log(`[Renderer] cellWidth: ${cellWidth}`);
     // Calculate required width based on minimum cell width, including 4px margin
     const requiredWidth = allXGroups.length * (cellWidth + 4);
     if (requiredWidth > boundsWidth) {
@@ -518,7 +518,14 @@ export const Renderer = forwardRef(({
   const colorLegendPosY = height;
 
   return (
-    <svg ref={ref} width={width} height={height + colorLegendHeight} style={{ backgroundColor }}>
+    <svg 
+      ref={ref}
+      width={Math.min(width, maxGraphWidth)} 
+      height={height + colorLegendHeight}
+      style={{ backgroundColor }}
+      viewBox={`0 0 ${width} ${height + colorLegendHeight}`}
+      preserveAspectRatio="xMidYMid meet"
+    >
       <defs>
         <style>{`
           @font-face {

@@ -11,8 +11,6 @@ const SHOW_DEBUG_OPTIONS = false;
 // Add constant for localStorage key
 const STORAGE_KEYS = {
   USE_ADAPTIVE_SCALE: 'bgee-heatmap-adaptive-scale',
-  GRAPH_WIDTH: 'bgee-heatmap-graph-width',
-  GRAPH_HEIGHT: 'bgee-heatmap-graph-height',
   CELL_WIDTH: 'bgee-heatmap-cell-width',
   SHOW_LEGEND: 'bgee-heatmap-show-legend',
   MARGIN_LEFT: 'bgee-heatmap-margin-left',
@@ -56,10 +54,10 @@ const Heatmap = ({
     getStoredValue(STORAGE_KEYS.X_LABEL_ROTATION, 0));
   const [yLabelAlign, setYLabelAlign] = useState(() => 
     getStoredValue(STORAGE_KEYS.Y_LABEL_ALIGN, yLabelJustify));
-  const [graphWidth, setGraphWidth] = useState(() => 
-    getStoredValue(STORAGE_KEYS.GRAPH_WIDTH, width));
-  const [graphHeight, setGraphHeight] = useState(() => 
-    getStoredValue(STORAGE_KEYS.GRAPH_HEIGHT, height));
+  const [graphWidth, setGraphWidth] = useState(width);
+  const [graphHeight, setGraphHeight] = useState(height);
+  // outer width, if graphWidth > maxGraphWidth -> scale SVG down
+  const [maxGraphWidth, setMaxGraphWidth] = useState(800);
   const [cellWidth, setCellWidth] = useState(() => 
     getStoredValue(STORAGE_KEYS.CELL_WIDTH, 50));
   const [colorPalette, setColorPalette] = useState(() => 
@@ -76,6 +74,32 @@ const Heatmap = ({
     getStoredValue(STORAGE_KEYS.SHOW_SETTINGS, false));
   const [useAdaptiveScale, setUseAdaptiveScale] = useState(() => 
     getStoredValue(STORAGE_KEYS.USE_ADAPTIVE_SCALE, false));
+
+  // Add state to track input values during editing
+  const [graphWidthInput, setGraphWidthInput] = useState(maxGraphWidth);
+  const [graphHeightInput, setGraphHeightInput] = useState(graphHeight);
+
+  // Update local input state without updating the actual graphWidth
+  const handleGraphWidthChange = (event) => {
+    setGraphWidthInput(event.target.value);
+  }
+
+  // Update the actual graphWidth and localStorage on blur
+  const handleGraphWidthBlur = (event) => {
+    const { value } = event.target;
+    setMaxGraphWidth(value);
+  }
+
+  // Update local input state without updating the actual graphHeight
+  const handleGraphHeightChange = (event) => {
+    setGraphHeightInput(event.target.value);
+  }
+
+  // Update the actual graphHeight and localStorage on blur
+  const handleGraphHeightBlur = (event) => {
+    const { value } = event.target;
+    setGraphHeight(value);
+  }
 
   // Move visibleTermIds before colorScale
   // Memoize the visible term IDs calculation
@@ -110,17 +134,6 @@ const Heatmap = ({
       .domain(THRESHOLDS.map(t => t * maxValue))
       .range(COLORS[colorPalette]);
   }, [data, visibleTermIds, colorPalette, useAdaptiveScale]);
-
-  // handle display property changes
-  const updateGraphWidth = ({ target: { value } }) => {
-    setGraphWidth(value);
-    localStorage.setItem(STORAGE_KEYS.GRAPH_WIDTH, JSON.stringify(value));
-  };
-
-  const updateGraphHeight = ({ target: { value } }) => {
-    setGraphHeight(value);
-    localStorage.setItem(STORAGE_KEYS.GRAPH_HEIGHT, JSON.stringify(value));
-  };
 
   // handle display property changes
   const updateCellWidth = ({ target: { value } }) => {
@@ -345,6 +358,8 @@ const Heatmap = ({
             colorLegendWidth={200}
             colorLegendHeight={COLOR_LEGEND_HEIGHT}
             maxCellWidth={cellWidth}
+            maxGraphWidth={maxGraphWidth}
+            setGraphWidth={setGraphWidth}
           />
 
           <Tooltip
@@ -455,8 +470,9 @@ const Heatmap = ({
                         <input 
                           type="text"
                           size="10"
-                          value={graphWidth}
-                          onChange={updateGraphWidth}
+                          value={graphWidthInput}
+                          onChange={handleGraphWidthChange}
+                          onBlur={handleGraphWidthBlur}
                         />
                       </td>
                     </tr>
@@ -466,8 +482,9 @@ const Heatmap = ({
                         <input 
                           type="text"
                           size="10"
-                          value={graphHeight}
-                          onChange={updateGraphHeight}
+                          value={graphHeightInput}
+                          onChange={handleGraphHeightChange}
+                          onBlur={handleGraphHeightBlur}
                         />
                       </td>
                     </tr>
