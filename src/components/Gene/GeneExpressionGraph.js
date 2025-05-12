@@ -42,7 +42,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
   // Init from URL
   const loc = useLocation();
   const initSearch = new URLSearchParams(loc.search);
-  const initDataType = initSearch.getAll('data_type') || ALL_DATA_TYPES;
+  const initDataType = initSearch.getAll('data_type').length === 0 ? ALL_DATA_TYPES : initSearch.getAll('data_type');
   const initHash = initSearch.get('data');
   const history = useHistory();
   const [isLoading, setIsLoading] = useState(true);
