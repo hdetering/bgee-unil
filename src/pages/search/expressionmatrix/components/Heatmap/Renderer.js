@@ -1,5 +1,8 @@
 import { useMemo, forwardRef } from "react";
+// import { useMemo, forwardRef, useRef, useState, useEffect } from "react";
 import * as d3 from "d3";
+// import { INITIAL_VALUE, ReactSVGPanZoom, TOOL_NONE, fitSelection, zoomOnViewerCenter, fitToViewer } from 'react-svg-pan-zoom';
+
 import { Tree } from "./TreeSvg"
 import { ColorLegendSvg } from "./ColorLegendSvg";
 // import { Tooltip } from "../../../Tooltip";
@@ -482,8 +485,58 @@ export const Renderer = forwardRef(({
   const colorLegendPosX = 0;
   const colorLegendPosY = height;
 
+  // NOTE: Deactivated for now, uncomment to use ReactSVGPanZoom
+  //----------------------------------------------------------
+  // const Viewer = useRef();
+  // const [tool, setTool] = useState(TOOL_NONE)
+  // const [value, setValue] = useState(INITIAL_VALUE)
+
+  // useEffect(() => {
+  //   Viewer.current?.fitToViewer();
+  // }, []);
+
+  /* Read all the available methods in the documentation */
+  // const zoomOnViewerCenter1 = () => Viewer.current.zoomOnViewerCenter(1.1)
+  // const fitSelection1 = () => Viewer.current.fitSelection(40, 40, 200, 200)
+  // const fitToViewer1 = () => Viewer.current.fitToViewer()
+
+  /* keep attention! handling the state in the following way doesn't fire onZoom and onPam hooks */
+  // const zoomOnViewerCenter2 = () => setValue(zoomOnViewerCenter(value, 1.1))
+  // const fitSelection2 = () => setValue(fitSelection(value, 40, 40, 200, 200))
+  // const fitToViewer2 = () => setValue(fitToViewer(value))
+
+  // const showReactSVGPanZoomControls = false;
+
   return (
     <div style={{ width: '100%', overflow: 'hidden' }}>
+      {/* {showReactSVGPanZoomControls && (
+      <div>
+      <h1>ReactSVGPanZoom</h1>
+      <hr/>
+
+      <button type="button" className="btn" onClick={() => zoomOnViewerCenter1()}>Zoom on center (mode 1)</button>
+      <button type="button" className="btn" onClick={() => fitSelection1()}>Zoom area 200x200 (mode 1)</button>
+      <button type="button" className="btn" onClick={() => fitToViewer1()}>Fit (mode 1)</button>
+      <hr/>
+
+      <button type="button" className="btn" onClick={() => zoomOnViewerCenter2()}>Zoom on center (mode 2)</button>
+      <button type="button" className="btn" onClick={() => fitSelection2()}>Zoom area 200x200 (mode 2)</button>
+      <button type="button" className="btn" onClick={() => fitToViewer2()}>Fit (mode 2)</button>
+      <hr/>
+      </div>
+      )} */}
+      
+      {/* <ReactSVGPanZoom
+        ref={Viewer}
+        width={Math.min(width, maxGraphWidth)} height={height + colorLegendHeight + 100}
+        tool={tool} onChangeTool={setTool}
+        value={value} onChangeValue={setValue}
+        onZoom={e => console.log('zoom')}
+        onPan={e => console.log('pan')}
+        onClick={event => console.log('click', event.x, event.y, event.originalEvent)}
+        background="white"
+      > */}
+      
       <svg 
         ref={ref} 
         width={Math.min(width, maxGraphWidth)} 
@@ -570,6 +623,7 @@ export const Renderer = forwardRef(({
           </g>
         </g>
       </svg>
+      {/* </ReactSVGPanZoom> */}
     </div>
   );
 });
