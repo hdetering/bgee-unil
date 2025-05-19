@@ -70,7 +70,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
       isFirstSearch: true,
       initSearch,
       pageType: EXPR_CALLS,
-      dataType,
+      dataType: dataTypeExpr?.split(','),
       dataQuality: 'SILVER',
       selectedExpOrAssay: [],
       selectedSpecies: speciesId,
