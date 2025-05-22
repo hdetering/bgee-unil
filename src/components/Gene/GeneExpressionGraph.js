@@ -633,6 +633,11 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
             backgroundColor='white'
           />
         )}
+        {!isLoading && searchResult && heatmapData.length === 0 && (
+          <div className="is-flex is-justify-content-center is-align-items-center">
+            <p className="is-size-4">No data found</p>
+          </div>
+        )}
       </div>
     </>
   );
