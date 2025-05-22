@@ -42,16 +42,24 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
   // Init from URL
   const loc = useLocation();
   const initSearch = new URLSearchParams(loc.search);
-  const initDataType = initSearch.getAll('data_type').length === 0 ? ALL_DATA_TYPES : initSearch.getAll('data_type');
   const initHash = initSearch.get('data');
   const history = useHistory();
   const [isLoading, setIsLoading] = useState(true);
   const [searchResult, setSearchResult] = useState();
   const [anatomicalTerms, setAnatomicalTerms] = useState([]);
   const [anatomicalTermsProps, setAnatomicalTermsProps] = useState({});
-  const [dataType, setDataTypes] = useState(initDataType);
+  const [dataType, setDataTypes] = useState(ALL_DATA_TYPES);
   const dataTypeKey = 'data_type';
   const dataTypeExpr = useQuery(dataTypeKey);
+
+  // Sync local state with URL parameter
+  useEffect(() => {
+    if (dataTypeExpr) {
+      setDataTypes(dataTypeExpr.split(','));
+    } else {
+      setDataTypes(ALL_DATA_TYPES);
+    }
+  }, [dataTypeExpr]);
 
   // In order to disable the search button if the search has already been made
   const formSearchButtonIsDisabled = useMemo(() => {
@@ -274,12 +282,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
   useEffect(() => {
     const params = getSearchParams();
     triggerInitialSearch(params);
-  }, [geneId, speciesId]);
-
-  useEffect(() => {
-    const params = getSearchParams();
-    triggerInitialSearch(params);
-  }, [dataType]);
+  }, [geneId, speciesId, dataTypeExpr]);
 
   // Perform API data request for subordinate terms
   const triggerSearchChildren = async (
