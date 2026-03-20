@@ -9,6 +9,96 @@ import { ColorLegendSvg } from "./ColorLegendSvg";
 // import styles from "./renderer.module.css";
 import fonts from "./fonts";
 
+/** Numeric score only; skips null/undefined/NaN/non-numeric (avoids string + number concat in reduce). */
+function toNumericScore(v) {
+  if (v === null || v === undefined) return null;
+  const n = typeof v === 'number' ? v : Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function computeTermAggregates(rows, aggFn) {
+  const byTerm = new Map();
+  (rows || []).forEach((d) => {
+    const n = toNumericScore(d.value);
+    if (n === null) return;
+    if (!byTerm.has(d.y)) byTerm.set(d.y, []);
+    byTerm.get(d.y).push(n);
+  });
+  const scores = new Map();
+  byTerm.forEach((values, termId) => {
+    if (aggFn === 'max') {
+      scores.set(termId, Math.max(...values));
+    } else {
+      scores.set(termId, values.reduce((a, b) => a + b, 0) / values.length);
+    }
+  });
+  return scores;
+}
+
+const DEBUG_ROW_SORT_KEY = 'bgee-debug-heatmap-row-sort';
+
+function logHeatmapRowSortDebug(rows, aggFn, scoreMap) {
+  const byTerm = new Map();
+  (rows || []).forEach((d) => {
+    const n = toNumericScore(d.value);
+    if (n === null) return;
+    if (!byTerm.has(d.y)) byTerm.set(d.y, []);
+    byTerm.get(d.y).push(n);
+  });
+  const skipped = (rows || []).filter((d) => toNumericScore(d.value) === null).length;
+  const tableRows = [...byTerm.entries()]
+    .map(([termId, values]) => {
+      const mean = values.reduce((a, b) => a + b, 0) / values.length;
+      const max = Math.max(...values);
+      return {
+        termId,
+        n: values.length,
+        min: Math.min(...values),
+        max,
+        mean: Math.round(mean * 1000) / 1000,
+        sortKey: aggFn === 'max' ? max : mean,
+        inScoreMap: scoreMap.has(termId),
+      };
+    })
+    .sort((a, b) => b.sortKey - a.sortKey);
+  // eslint-disable-next-line no-console
+  console.log(
+    `[Heatmap row sort] aggFn=${aggFn}, terms with numeric data=${tableRows.length}, cells skipped (no finite score)=${skipped}`
+  );
+  // eslint-disable-next-line no-console
+  console.table(tableRows);
+}
+
+/** Sort sibling terms: non–top-level first, then top-level, matching existing hierarchy rules. */
+function sortSiblingTerms(children, rowOrdering, scoreMap) {
+  if (!children?.length) return children;
+  const low = children.filter((c) => !c.isTopLevelTerm);
+  const high = children.filter((c) => c.isTopLevelTerm);
+  const cmpAlpha = (a, b) => a.label.localeCompare(b.label);
+  const cmpExpr = (a, b) => {
+    const sa = scoreMap.has(a.id) ? scoreMap.get(a.id) : -Infinity;
+    const sb = scoreMap.has(b.id) ? scoreMap.get(b.id) : -Infinity;
+    if (sb !== sa) return sb - sa;
+    return a.label.localeCompare(b.label);
+  };
+  const cmp = rowOrdering === 'expression' ? cmpExpr : cmpAlpha;
+  low.sort(cmp);
+  high.sort(cmp);
+  return [...low, ...high];
+}
+
+/** Reorder children at every level; structure and roots stay the same, only sibling order changes. */
+function reorderAnatomyTree(nodes, rowOrdering, scoreMap) {
+  if (!nodes?.length) return nodes;
+  const withSubtrees = nodes.map((node) => ({
+    ...node,
+    children: node.children?.length
+      ? reorderAnatomyTree(node.children, rowOrdering, scoreMap)
+      : node.children,
+  }));
+  return sortSiblingTerms(withSubtrees, rowOrdering, scoreMap);
+}
+
 const MARGIN = { top: 60, right: 60, bottom: 50, left: 200 };
 const COLOR_LEGEND_MARGIN = { top: 0, right: 0, bottom: 50, left: 0 };
 
@@ -36,6 +126,8 @@ export const Renderer = forwardRef(({
   minCellHeight = 10,
   maxGraphWidth = 1500,
   setGraphWidth,
+  rowOrdering = 'alphabetical',
+  rowAggFn = 'mean',
 }, ref) => {
   // The bounds (=area inside the axis) is calculated by substracting the margins
   const boundsWidth = width - MARGIN.right - marginLeft;
@@ -54,59 +146,65 @@ export const Renderer = forwardRef(({
   // console.log(`[Renderer] drilldown:\n${JSON.stringify(drilldown)}`);
   // console.log(`[Renderer] termProps:\n${JSON.stringify(termProps)}`);
 
-  // reorder y-axis terms according to hierarchy
+  // Flatten y-axis terms in tree order (siblings already ordered in drilldownOrdered)
   function orderLabelsHierarchically(objectList) {
     const orderedLabels = [];
 
     function traverse(children, depth, visible, embedLvls) {
       if (!children || !Array.isArray(children)) return;
 
-      // collect low-level children
-      const childrenLowLvl = children.filter((child) => !child.isTopLevelTerm)
-        .sort((a, b) => a.label.localeCompare(b.label));
-      // collect high-level children
-      const childrenHighLvl = children.filter((child) => child.isTopLevelTerm)
-        .sort((a, b) => a.label.localeCompare(b.label));
-
-      // Sort the children based on the label
-      children.sort((a, b) => a.label.localeCompare(b.label));
-  
-      // Push the labels at the current depth
-      [...childrenLowLvl, ...childrenHighLvl].forEach((child, idx, arr) => {
-      // children.forEach((child, idx, arr) => {
+      children.forEach((child, idx, arr) => {
         if (visible && (child.isPopulated || showMissingData)) {
           const newLabel = {
-            id: child.id, 
-            label: child.label, 
+            id: child.id,
+            label: child.label,
             depth,
             isTopLevelTerm: child.isTopLevelTerm,
-            isPopulated: child.isPopulated, 
-            isExpanded: child.isExpanded, 
-            isLastChild: (idx === arr.length-1),
-            embeddedInLvls: (idx === arr.length-1) ? [...(embedLvls.filter(x => x!==depth))] : [...embedLvls],
-          }
+            isPopulated: child.isPopulated,
+            isExpanded: child.isExpanded,
+            isLastChild: idx === arr.length - 1,
+            embeddedInLvls:
+              idx === arr.length - 1
+                ? [...embedLvls.filter((x) => x !== depth)]
+                : [...embedLvls],
+          };
           orderedLabels.push(newLabel);
-          traverse(child.children, depth + 1, child.isExpanded, [...(newLabel.embeddedInLvls), depth+1]);
-        } else {
-          // DEBUG: remove console log in prod
-          // console.log(`[Renderer] not visible:\n${JSON.stringify(child)}`);
+          traverse(child.children, depth + 1, child.isExpanded, [
+            ...newLabel.embeddedInLvls,
+            depth + 1,
+          ]);
         }
       });
     }
-  
-    // Start traversal from the root
+
     traverse(objectList, 0, true, []);
-  
     return orderedLabels;
   }
+
+  const termScoreById = useMemo(() => {
+    const map = computeTermAggregates(data, rowAggFn);
+    if (
+      typeof window !== 'undefined' &&
+      window.localStorage?.getItem(DEBUG_ROW_SORT_KEY) === '1' &&
+      rowOrdering === 'expression'
+    ) {
+      logHeatmapRowSortDebug(data, rowAggFn, map);
+    }
+    return map;
+  }, [data, rowAggFn, rowOrdering]);
+
+  const drilldownOrdered = useMemo(() => {
+    if (!drilldown?.length) return drilldown;
+    const clone = JSON.parse(JSON.stringify(drilldown));
+    return reorderAnatomyTree(clone, rowOrdering, termScoreById);
+  }, [drilldown, rowOrdering, termScoreById]);
 
   // sort x-axis labels alphabetically
   const xLabels = useMemo(() => [...new Set(dataShow.map((d) => d.x))], [dataShow]);
   const xLabelsOrdered = xLabels.sort((a, b) => a.localeCompare(b));
 
   // sort y-axis labels hierarchically  
-  const drilldownCopy = JSON.parse(JSON.stringify(drilldown));
-  const yTermsOrdered = orderLabelsHierarchically(drilldownCopy);
+  const yTermsOrdered = orderLabelsHierarchically(drilldownOrdered);
   // console.log(`[Renderer] yTerms:\n${JSON.stringify(yTerms)}`);
   // console.log(`[Renderer] yTermsOrdered:\n${JSON.stringify(yTermsOrdered)}`);
   // TODO: filter out missing data?
@@ -578,7 +676,7 @@ export const Renderer = forwardRef(({
 
           <g transform={`translate(-${marginLeft-10}, 5)`} >
             <Tree
-              data={drilldown}
+              data={drilldownOrdered}
               yScale={yScale}
               toggleCollapse={onToggleExpandCollapse}
               labelFont='Open Sans'
