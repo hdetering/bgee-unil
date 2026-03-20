@@ -40,9 +40,9 @@
     "web-vitals": "^1.0.1"
   },
   "scripts": {
-    "start": "craco start",
+    "start": "NODE_OPTIONS=--openssl-legacy-provider craco start",
     "archive": "node archiveCreation.js",
-    "build:cra": "set \"GENERATE_SOURCEMAP=false\" && craco build",
+    "build:cra": "NODE_OPTIONS=--openssl-legacy-provider GENERATE_SOURCEMAP=false craco build",
     "build": "node productionCreation.js",
     "prod": "node productionCreation.js",
     "annot": "node productionCreation.js",
