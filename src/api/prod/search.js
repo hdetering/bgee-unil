@@ -25,6 +25,8 @@ export const SEARCH_CANCEL_API = {
   rawData: {
     search: null,
     count: null,
+    /** Request-parameter / display_rp fetches — must not share token with `search` or URL init cancels */
+    requestParams: null,
   },
 };
 
@@ -548,7 +550,12 @@ const search = {
 
         const paramsURLCalled = params.toString();
 
-        const typeToken = 'search'; // alternatives: 'count'
+        const typeToken = 'requestParams';
+        if (SEARCH_CANCEL_API?.rawData?.[typeToken] !== null) {
+          SEARCH_CANCEL_API?.rawData?.[typeToken]?.(
+            '-- Request-parameters fetch canceled because another was started --'
+          );
+        }
         axiosInstance
           .get(`/?${paramsURLCalled}`, {
             cancelToken: new axios.CancelToken((c) => {
@@ -678,8 +685,13 @@ const search = {
             return resolve({ resp: data, paramsURLCalled });
           })
           .catch((error) => {
+            SEARCH_CANCEL_API.rawData[typeToken] = null;
+            if (axios.isCancel(error)) {
+              reject(error);
+              return;
+            }
             errorHandler(error);
-            reject(error?.response || error?.message);
+            reject(error?.response ?? error?.message ?? error);
           });
 
       }),
@@ -748,8 +760,13 @@ const search = {
               return resolve({ resp: data, paramsURLCalled });
             })
             .catch((error) => {
+              SEARCH_CANCEL_API.rawData[typeToken] = null;
+              if (axios.isCancel(error)) {
+                reject(error);
+                return;
+              }
               errorHandler(error);
-              reject(error?.response || error?.message);
+              reject(error?.response ?? error?.message ?? error);
             });
 
         }),
@@ -787,10 +804,9 @@ const search = {
           for (const [key, val] of form?.initSearch) {
             if (
               key !== 'data_type' &&
-              // key !== 'offset' &&
-              // key !== 'limit' &&
-              key !== 'pageType' // &&
-              // key !== 'pageNumber'
+              key !== 'offset' &&
+              key !== 'limit' &&
+              key !== 'pageType'
             ) {
               // For the 1st search we don't send the filters if we request OnlyCount
               // onlyCount => all parameters but the filters
@@ -888,8 +904,13 @@ const search = {
             return resolve({ resp: data, paramsURLCalled });
           })
           .catch((error) => {
+            SEARCH_CANCEL_API.rawData[typeToken] = null;
+            if (axios.isCancel(error)) {
+              reject(error);
+              return;
+            }
             errorHandler(error);
-            reject(error?.response || error?.message);
+            reject(error?.response ?? error?.message ?? error);
           });
       }),
   },

@@ -3,6 +3,7 @@
 /* eslint-disable no-use-before-define */
 import { useState, useEffect, useCallback } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import api from '../../../api';
 import { getGeneLabel } from '../../../helpers/gene';
 import {
@@ -754,9 +755,13 @@ const useLogic = (isExprCalls) => {
         setSearchResult(data);
       }
     } catch (error) {
-      console.error(`[useLogic.triggerInitialSearch] ERROR:\n${JSON.stringify(error)}`)
-      history.replace(`${URL_ROOT}${loc.pathname}`);
-      setIsLoading(false);
+      if (axios.isCancel(error)) {
+        setIsLoading(false);
+      } else {
+        console.error(`[useLogic.triggerInitialSearch] ERROR:\n${JSON.stringify(error)}`);
+        history.replace(`${URL_ROOT}${loc.pathname}`);
+        setIsLoading(false);
+      }
     } finally {
       // console.log(`[useLogic.triggerInitialSearch] finally.`)
       setIsFirstSearch(false);
@@ -905,8 +910,11 @@ const useLogic = (isExprCalls) => {
         //     : resp?.data?.resultCount?.[dataType]
         // );
       })
-      .catch(() => {
-        // We remove all the parameters that we may have sent
+      .catch((error) => {
+        if (axios.isCancel(error)) {
+          setIsLoading(false);
+          return;
+        }
         history.replace(`${URL_ROOT}${loc.pathname}`);
         setIsLoading(false);
       })
@@ -941,6 +949,9 @@ const useLogic = (isExprCalls) => {
     // params.hasDevStageSubStructure = 0;
     params.limit = BASE_LIMIT;
     params.conditionalParam2 = ['anat_entity']; // HD: restrict to anatomical terms
+    // Child fetch must use explicit anat/cell params — never merge initSearch (hash) while
+    // isFirstSearch is true, or SUMMARY from the top-level query is sent and the API returns 400.
+    params.isFirstSearch = false;
     // HD: discard top-level terms from search results
     // NOTE: use only when we want to get children of "multicellular organism"
     if (parentId === 'UBERON:0000468-GO:0005575') {
@@ -951,7 +962,7 @@ const useLogic = (isExprCalls) => {
     // DEBUG: remove console log in prod
     // console.log(`[useLogic] triggerSearchChildren - triggered!`);
     return api.search.geneExpressionMatrix
-      .search(params, false)
+      .search(params, false, true)
       .then(({ resp, paramsURLCalled }) => {
         // DEBUG: remove in prod
         // console.log(`[useLogic] triggerSearchChildren - response:\n${JSON.stringify(resp)}`);
@@ -1109,13 +1120,13 @@ const useLogic = (isExprCalls) => {
         // Finally, we set the values we are interested in
         setIsLoading(false);
       })
-      /* .catch(() => {
-        // DEBUG: remove console log in prod
-        console.log(`[useLogic] triggerSearchChildren - Whoops! Something went wrong...`);
-        // We remove all the parameters that we may have sent
-        history.replace(`${URL_ROOT}${loc.pathname}`);
+      .catch((error) => {
+        if (axios.isCancel(error)) {
+          setIsLoading(false);
+          return;
+        }
         setIsLoading(false);
-      }) */
+      })
       .finally(() => {
         // The next searches will not be considered as the first
         // --> Filters will now be used for the next requests
@@ -1388,6 +1399,47 @@ const useLogic = (isExprCalls) => {
     // console.log(`[useLogic] DONE onToggleExpandCollapse.`);
   };
 
+  /** Expand exactly one highest-scoring direct child per tree root; collapse sibling top-level children. */
+  const syncHeatmapTopLevelAutoExpand = useCallback((winnerIds) => {
+    if (!winnerIds?.length) return;
+    setAnatomicalTerms((prev) => {
+      if (!prev?.length || winnerIds.length !== prev.length) return prev;
+      let changed = false;
+      const next = prev.map((root, i) => {
+        const winnerId = winnerIds[i];
+        if (winnerId == null || !root.children?.length) return root;
+        const pool = root.children.filter((c) => c.isTopLevelTerm);
+        const candidates = pool.length ? pool : [...root.children];
+        const expandedAmongCandidates = candidates.filter((c) => c.isExpanded);
+        if (
+          expandedAmongCandidates.length === 1 &&
+          expandedAmongCandidates[0].id === winnerId
+        ) {
+          return root;
+        }
+        changed = true;
+        const newRoot = JSON.parse(JSON.stringify(root));
+        newRoot.children = newRoot.children.map((child) => {
+          const newChild = JSON.parse(JSON.stringify(child));
+          const inCandidates = candidates.some((c) => c.id === child.id);
+          if (!inCandidates) return newChild;
+          if (child.id === winnerId) {
+            if (!child.hasBeenQueried) {
+              triggerSearchChildren(child.id, child.anatEntityId);
+              newChild.hasBeenQueried = true;
+            }
+            newChild.isExpanded = true;
+          } else {
+            newChild.isExpanded = false;
+          }
+          return newChild;
+        });
+        return newRoot;
+      });
+      return changed ? next : prev;
+    });
+  }, [triggerSearchChildren]);
+
   // Add function to process gene list
   const processGeneList = async (geneListParam, speciesId) => {
     if (!geneListParam) return;
@@ -1525,6 +1577,7 @@ const useLogic = (isExprCalls) => {
     selectedSexes,
     isLoading,
     isFirstSearch,
+    isInitializingFromUrl,
     filters,
     dataTypesExpCalls,
     dataQuality,
@@ -1561,6 +1614,7 @@ const useLogic = (isExprCalls) => {
     addConditionalParam,
     getSearchParams,
     onToggleExpandCollapse,
+    syncHeatmapTopLevelAutoExpand,
     processGeneList,
   };
 };

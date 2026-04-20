@@ -7,6 +7,8 @@ const GeneExpressionMatrixResults = ({
   anatomicalTermsProps,
   maxExpScore,
   onToggleExpandCollapse,
+  onSyncTopLevelAutoExpand,
+  isInitializingFromUrl,
   isLoading,
   isFirstSearch
 }) => {
@@ -64,6 +66,8 @@ const GeneExpressionMatrixResults = ({
           termProps={anatomicalTermsProps}
           // setTermProps={setAnatomicalTermsProps}
           onToggleExpandCollapse={onToggleExpandCollapse}
+          onSyncTopLevelAutoExpand={onSyncTopLevelAutoExpand}
+          isInitializingFromUrl={isInitializingFromUrl}
           width={800}
           height={800}
           backgroundColor='white'
