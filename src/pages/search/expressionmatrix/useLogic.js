@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-expressions */
 /* eslint-disable consistent-return */
 /* eslint-disable no-use-before-define */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import api from '../../../api';
@@ -212,6 +212,7 @@ const useLogic = (isExprCalls) => {
   // results
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingChildren, setIsLoadingChildren] = useState(false);
+  const autoExpandFetchInFlightRef = useRef(new Set());
   const [show, setShow] = useState(true);
   const [searchResult, setSearchResult] = useState(null);
   // const [maxExpScore, setMaxExpScore] = useState({});
@@ -1410,43 +1411,52 @@ const useLogic = (isExprCalls) => {
   /** Expand exactly one highest-scoring direct child per tree root; collapse sibling top-level children. */
   const syncHeatmapTopLevelAutoExpand = useCallback((winnerIds) => {
     if (!winnerIds?.length) return;
-    setAnatomicalTerms((prev) => {
-      if (!prev?.length || winnerIds.length !== prev.length) return prev;
-      let changed = false;
-      const next = prev.map((root, i) => {
-        const winnerId = winnerIds[i];
-        if (winnerId == null || !root.children?.length) return root;
-        const pool = root.children.filter((c) => c.isTopLevelTerm);
-        const candidates = pool.length ? pool : [...root.children];
-        const expandedAmongCandidates = candidates.filter((c) => c.isExpanded);
-        if (
-          expandedAmongCandidates.length === 1 &&
-          expandedAmongCandidates[0].id === winnerId
-        ) {
-          return root;
-        }
-        changed = true;
-        const newRoot = JSON.parse(JSON.stringify(root));
-        newRoot.children = newRoot.children.map((child) => {
-          const newChild = JSON.parse(JSON.stringify(child));
-          const inCandidates = candidates.some((c) => c.id === child.id);
-          if (!inCandidates) return newChild;
-          if (child.id === winnerId) {
-            if (!child.hasBeenQueried) {
-              triggerSearchChildren(child.id, child.anatEntityId);
-              newChild.hasBeenQueried = true;
-            }
-            newChild.isExpanded = true;
-          } else {
-            newChild.isExpanded = false;
+    if (!anatomicalTerms?.length || winnerIds.length !== anatomicalTerms.length) return;
+    const termsToFetch = [];
+    let changed = false;
+    const next = anatomicalTerms.map((root, i) => {
+      const winnerId = winnerIds[i];
+      if (winnerId == null || !root.children?.length) return root;
+      const pool = root.children.filter((c) => c.isTopLevelTerm);
+      const candidates = pool.length ? pool : [...root.children];
+      const expandedAmongCandidates = candidates.filter((c) => c.isExpanded);
+      if (
+        expandedAmongCandidates.length === 1 &&
+        expandedAmongCandidates[0].id === winnerId
+      ) {
+        return root;
+      }
+      changed = true;
+      const newRoot = JSON.parse(JSON.stringify(root));
+      newRoot.children = newRoot.children.map((child) => {
+        const newChild = JSON.parse(JSON.stringify(child));
+        const inCandidates = candidates.some((c) => c.id === child.id);
+        if (!inCandidates) return newChild;
+        if (child.id === winnerId) {
+          if (!child.hasBeenQueried) {
+            termsToFetch.push({ id: child.id, anatEntityId: child.anatEntityId });
+            newChild.hasBeenQueried = true;
           }
-          return newChild;
-        });
-        return newRoot;
+          newChild.isExpanded = true;
+        } else {
+          newChild.isExpanded = false;
+        }
+        return newChild;
       });
-      return changed ? next : prev;
+      return newRoot;
     });
-  }, [triggerSearchChildren]);
+    if (changed) {
+      setAnatomicalTerms(next);
+    }
+    termsToFetch.forEach(({ id, anatEntityId }) => {
+      if (autoExpandFetchInFlightRef.current.has(id)) return;
+      autoExpandFetchInFlightRef.current.add(id);
+      Promise.resolve(triggerSearchChildren(id, anatEntityId))
+        .finally(() => {
+          autoExpandFetchInFlightRef.current.delete(id);
+        });
+    });
+  }, [anatomicalTerms, triggerSearchChildren]);
 
   // Add function to process gene list
   const processGeneList = async (geneListParam, speciesId) => {
