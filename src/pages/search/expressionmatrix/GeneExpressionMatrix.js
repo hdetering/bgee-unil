@@ -48,6 +48,7 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
     speciesSexes,
     selectedSexes,
     isLoading,
+    isLoadingChildren,
     isFirstSearch,
     isInitializingFromUrl,
     dataTypesExpCalls,
@@ -89,6 +90,7 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
   const columnsDesc = isExprCalls ? columnDescExprsCall : defaultColumDesc;
 
   const detailedData = TAB_PAGE_EXPR_CALL;
+  const isBusy = isLoading || isLoadingChildren;
 
   useEffect(() => {
     const params = getSearchParams();
@@ -227,7 +229,7 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
                         className="button is-success is-light is-outlined"
                         type="submit"
                         onClick={onSubmit}
-                        disabled={isLoading}
+                        disabled={isBusy}
                       >
                         Submit
                       </Button>
@@ -271,7 +273,7 @@ const GeneExpressionMatrix = ({ isExprCalls = false }) => {
           </h2>
 
           <div className="resultPart" style={{ position: 'relative' }}>
-            {isLoading && (
+            {isBusy && (
               <div style={{
                 position: 'absolute',
                 top: 0,

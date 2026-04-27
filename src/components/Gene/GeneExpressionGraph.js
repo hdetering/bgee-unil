@@ -61,6 +61,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
   const initHash = initSearch.get('data');
   const history = useHistory();
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingChildren, setIsLoadingChildren] = useState(false);
   const [searchResult, setSearchResult] = useState();
   const [anatomicalTerms, setAnatomicalTerms] = useState([]);
   const [anatomicalTermsProps, setAnatomicalTermsProps] = useState({});
@@ -326,7 +327,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
       params.discardAnatEntityAndChildrenId = 'SUMMARY';
     }
 
-    setIsLoading(true);
+    setIsLoadingChildren(true);
     // DEBUG: remove console log in prod
     // console.log(`[GeneExpressionGraph] triggerSearchChildren - triggered!`);
     // console.log(`[GeneExpressionGraph] triggerSearchChildren - params:\n${JSON.stringify(params)}`);
@@ -394,7 +395,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
 
           // Add property to each element in the current level
           return node.map(item => {
-            const newItem = { ...item };
+            const newItem = { ...item, children: [...(item.children || [])] };
             if (item.id === termId) {
               // add children
               // console.log(`[Heatmap GeneExpressionGraph] adding children for:\n${termId} -> ${JSON.stringify([...children])}`);
@@ -430,42 +431,47 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
 
       // console.log(`[GeneExpressionGraph] triggerSearchChildren newChildTerms:\n${JSON.stringify([...newChildTerms], null, 2)}`);
       if (newChildTerms.size > 0) {
-        const newAnatTerms = addChildren(anatomicalTerms, parentId, [...newChildTerms]);
-        // DEBUG: remove console log in prod
-        // console.log(`[GeneExpressionGraph] triggerSearchChildren anatomicalTerms:\n${JSON.stringify(anatomicalTerms)}`);
-        // console.log(`[GeneExpressionGraph] triggerSearchChildren newAnatTerms:\n${JSON.stringify(newAnatTerms)}`);
-        // console.log(`[GeneExpressionGraph] CALL setAnatomicalTerms`);
-        setAnatomicalTerms(newAnatTerms);
+        setAnatomicalTerms((prevTerms) => (
+          addChildren(prevTerms, parentId, [...newChildTerms])
+        ));
         // add term props for new terms
-        const newAnatTermsProps = {...anatomicalTermsProps};
-        newChildTerms.forEach((childStr) => {
-          const child = JSON.parse(childStr);  // Parse the stringified child object
-          if (!(child.id in newAnatTermsProps)) {
-            newAnatTermsProps[child.id] = {
-              label: child.label,
-              anatEntityId: child.anatEntityId,
-              anatEntityLabel: child.anatEntityLabel,
-              cellTypeId: child.cellTypeId,
-              cellTypeLabel: child.cellTypeLabel,
-              isTopLevelTerm: child.isTopLevelTerm,
-              isExpanded: child.isExpanded,
-              isPopulated: child.isPopulated,
-              hasBeenQueried: child.hasBeenQueried,
-              isSingleCell: child.isSingleCell,
-            };
-          }
+        setAnatomicalTermsProps((prevProps) => {
+          const newAnatTermsProps = { ...prevProps };
+          newChildTerms.forEach((childStr) => {
+            const child = JSON.parse(childStr);  // Parse the stringified child object
+            if (!(child.id in newAnatTermsProps)) {
+              newAnatTermsProps[child.id] = {
+                label: child.label,
+                anatEntityId: child.anatEntityId,
+                anatEntityLabel: child.anatEntityLabel,
+                cellTypeId: child.cellTypeId,
+                cellTypeLabel: child.cellTypeLabel,
+                isTopLevelTerm: child.isTopLevelTerm,
+                isExpanded: child.isExpanded,
+                isPopulated: child.isPopulated,
+                hasBeenQueried: child.hasBeenQueried,
+                isSingleCell: child.isSingleCell,
+              };
+            }
+          });
+          return newAnatTermsProps;
         });
-        // console.log(`[GeneExpressionGraph] triggerSearchChildren newAnatTermsProps:\n${JSON.stringify(newAnatTermsProps)}`);
-        setAnatomicalTermsProps(newAnatTermsProps);
       }
 
       // add additional data to previous ones
-      const exprData = searchResult;
-      exprData.expressionData.expressionCalls.push(...resp?.data.expressionData.expressionCalls);
-      setSearchResult(exprData);
+      setSearchResult((prevResult) => {
+        if (!prevResult?.expressionData?.expressionCalls) return prevResult;
+        const newCalls = resp?.data?.expressionData?.expressionCalls || [];
+        return {
+          ...prevResult,
+          expressionData: {
+            ...prevResult.expressionData,
+            expressionCalls: [...prevResult.expressionData.expressionCalls, ...newCalls],
+          },
+        };
+      });
 
       // Finally, we set the values we are interested in
-      setIsLoading(false);
     })
     .catch((error) => {
       logApiError('[GeneExpressionGraph] triggerSearchChildren', error, {
@@ -473,7 +479,9 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
         selectedTissueId,
         params,
       });
-      setIsLoading(false);
+    })
+    .finally(() => {
+      setIsLoadingChildren(false);
     });
   };
 
@@ -609,6 +617,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
       ylvl: 0
     };
   }) || [];
+  const isBusy = isLoading || isLoadingChildren;
 
   return (
     <>
@@ -621,7 +630,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
         Expression graph
       </Bulma.Title>
       <div>
-        {isLoading && (
+        {isBusy && (
           <progress
             className="progress is-small"
             max="100"
