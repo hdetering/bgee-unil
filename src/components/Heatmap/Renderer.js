@@ -5,6 +5,35 @@ import { ColorLegendSvg } from "./ColorLegendSvg";
 // import { Tooltip } from "../../../Tooltip";
 // import styles from "./renderer.module.css";
 import fonts from "./fonts";
+import { computeTermAggregates } from "./heatmapAggregates";
+
+function sortSiblingTerms(children, rowOrdering, scoreMap) {
+  if (!children?.length) return children;
+  const low = children.filter((c) => !c.isTopLevelTerm);
+  const high = children.filter((c) => c.isTopLevelTerm);
+  const cmpAlpha = (a, b) => a.label.localeCompare(b.label);
+  const cmpExpr = (a, b) => {
+    const sa = scoreMap.has(a.id) ? scoreMap.get(a.id) : -Infinity;
+    const sb = scoreMap.has(b.id) ? scoreMap.get(b.id) : -Infinity;
+    if (sb !== sa) return sb - sa;
+    return a.label.localeCompare(b.label);
+  };
+  const cmp = rowOrdering === 'expression' ? cmpExpr : cmpAlpha;
+  low.sort(cmp);
+  high.sort(cmp);
+  return [...low, ...high];
+}
+
+function reorderAnatomyTree(nodes, rowOrdering, scoreMap) {
+  if (!nodes?.length) return nodes;
+  const withSubtrees = nodes.map((node) => ({
+    ...node,
+    children: node.children?.length
+      ? reorderAnatomyTree(node.children, rowOrdering, scoreMap)
+      : node.children,
+  }));
+  return sortSiblingTerms(withSubtrees, rowOrdering, scoreMap);
+}
 
 const MARGIN = { top: 50, right: 10, bottom: 50, left: 200 };
 const COLOR_LEGEND_MARGIN = { top: 0, right: 0, bottom: 50, left: 0 };
@@ -34,6 +63,8 @@ export const Renderer = forwardRef(({
   minCellHeight = 10,
   maxGraphWidth = 1000,
   setGraphWidth,
+  rowOrdering = 'alphabetical',
+  rowAggFn = 'mean',
 }, ref) => {
   // The bounds (=area inside the axis) is calculated by substracting the margins
   const boundsWidth = width - MARGIN.right - marginLeft;
@@ -52,6 +83,14 @@ export const Renderer = forwardRef(({
   // console.log(`[Renderer] drilldown:\n${JSON.stringify(drilldown)}`);
   // console.log(`[Renderer] termProps:\n${JSON.stringify(termProps)}`);
 
+  const termScoreById = useMemo(() => computeTermAggregates(data, rowAggFn), [data, rowAggFn]);
+
+  const drilldownOrdered = useMemo(() => {
+    if (!drilldown?.length) return drilldown;
+    const clone = JSON.parse(JSON.stringify(drilldown));
+    return reorderAnatomyTree(clone, rowOrdering, termScoreById);
+  }, [drilldown, rowOrdering, termScoreById]);
+
   // reorder y-axis terms according to hierarchy
   function orderLabelsHierarchically(objectList) {
     const orderedLabels = [];
@@ -59,19 +98,8 @@ export const Renderer = forwardRef(({
     function traverse(children, depth, visible, embedLvls) {
       if (!children || !Array.isArray(children)) return;
 
-      // collect low-level children
-      const childrenLowLvl = children.filter((child) => !child.isTopLevelTerm)
-        .sort((a, b) => a.label.localeCompare(b.label));
-      // collect high-level children
-      const childrenHighLvl = children.filter((child) => child.isTopLevelTerm)
-        .sort((a, b) => a.label.localeCompare(b.label));
-
-      // Sort the children based on the label
-      children.sort((a, b) => a.label.localeCompare(b.label));
-
       // Push the labels at the current depth
-      [...childrenLowLvl, ...childrenHighLvl].forEach((child, idx, arr) => {
-      // children.forEach((child, idx, arr) => {
+      children.forEach((child, idx, arr) => {
         if (visible && (child.isPopulated || showMissingData)) {
           const newLabel = {
             id: child.id,
@@ -98,8 +126,7 @@ export const Renderer = forwardRef(({
     return orderedLabels;
   }
 
-  const drilldownCopy = JSON.parse(JSON.stringify(drilldown));
-  const yTermsOrdered = orderLabelsHierarchically(drilldownCopy);
+  const yTermsOrdered = orderLabelsHierarchically(drilldownOrdered);
   // console.log(`[Renderer] yTerms:\n${JSON.stringify(yTerms)}`);
   // console.log(`[Renderer] yTermsOrdered:\n${JSON.stringify(yTermsOrdered)}`);
   // TODO: filter out missing data?

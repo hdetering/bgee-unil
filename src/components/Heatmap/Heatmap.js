@@ -5,6 +5,7 @@ import { Renderer } from "./Renderer";
 import { Tooltip } from "./Tooltip";
 import { DetailView } from "./DetailView";
 import { COLORS, THRESHOLDS, COLOR_LEGEND_HEIGHT } from "./constants";
+import { computeTermAggregates, pickWinnerChildIdForRoot } from "./heatmapAggregates";
 
 const SHOW_DEBUG_OPTIONS = false;
 
@@ -20,7 +21,10 @@ const STORAGE_KEYS = {
   BACKGROUND_COLOR: 'bgee-heatmap-background-color',
   SHOW_DESC_MAX: 'bgee-heatmap-show-desc-max',
   SHOW_MISSING_DATA: 'bgee-heatmap-show-missing-data',
-  SHOW_SETTINGS: 'bgee-heatmap-show-settings'
+  SHOW_SETTINGS: 'bgee-heatmap-show-settings',
+  ROW_ORDERING: 'bgee-heatmap-row-ordering',
+  ROW_AGG_FN: 'bgee-heatmap-row-agg-fn',
+  AUTO_EXPAND_MOST_EXPRESSED: 'bgee-heatmap-auto-expand-most-expressed'
 };
 
 // Add helper function
@@ -44,6 +48,9 @@ const Heatmap = ({
   termProps,
   yLabelJustify = 'right',
   onToggleExpandCollapse,
+  onSyncTopLevelAutoExpand,
+  isLoading = false,
+  isInitializingFromUrl = false,
 }) => {
   // COMPONENT STATE
   const [hoveredCell, setHoveredCell] = useState(null);
@@ -74,6 +81,12 @@ const Heatmap = ({
     getStoredValue(STORAGE_KEYS.SHOW_SETTINGS, false));
   const [useAdaptiveScale, setUseAdaptiveScale] = useState(() => 
     getStoredValue(STORAGE_KEYS.USE_ADAPTIVE_SCALE, false));
+  const [rowOrdering, setRowOrdering] = useState(() =>
+    getStoredValue(STORAGE_KEYS.ROW_ORDERING, 'alphabetical'));
+  const [rowAggFn, setRowAggFn] = useState(() =>
+    getStoredValue(STORAGE_KEYS.ROW_AGG_FN, 'mean'));
+  const [autoExpandMostExpressed, setAutoExpandMostExpressed] = useState(() =>
+    getStoredValue(STORAGE_KEYS.AUTO_EXPAND_MOST_EXPRESSED, true));
 
   // Add state to track input values during editing
   const [graphWidthInput, setGraphWidthInput] = useState(maxGraphWidth);
@@ -193,6 +206,19 @@ const Heatmap = ({
     setShowSettings(value);
     localStorage.setItem(STORAGE_KEYS.SHOW_SETTINGS, JSON.stringify(value));
   };
+  const updateRowOrdering = ({ target: { value } }) => {
+    setRowOrdering(value);
+    localStorage.setItem(STORAGE_KEYS.ROW_ORDERING, value);
+  };
+  const updateRowAggFn = ({ target: { value } }) => {
+    setRowAggFn(value);
+    localStorage.setItem(STORAGE_KEYS.ROW_AGG_FN, value);
+  };
+  const updateAutoExpandMostExpressed = () => {
+    const value = !autoExpandMostExpressed;
+    setAutoExpandMostExpressed(value);
+    localStorage.setItem(STORAGE_KEYS.AUTO_EXPAND_MOST_EXPRESSED, JSON.stringify(value));
+  };
 
   // Add handler for adaptive scale toggle
   const updateUseAdaptiveScale = () => {
@@ -238,8 +264,51 @@ const Heatmap = ({
     setMarginLeft(flexMarginLeft);
   }, [yTerms]);
 
-  // sort entries by y coordinate
-  const displayData = data.sort((a, b) => a.y.localeCompare(b.y));
+  const displayData = useMemo(
+    () => (data?.length ? [...data].sort((a, b) => a.y.localeCompare(b.y)) : data),
+    [data]
+  );
+
+  const topLevelAutoExpandWinnerIds = useMemo(() => {
+    if (!autoExpandMostExpressed || !data?.length || !yTerms?.length) {
+      return null;
+    }
+    const scoreMap = computeTermAggregates(data, rowAggFn);
+    return yTerms.map((root) => pickWinnerChildIdForRoot(root, scoreMap));
+  }, [autoExpandMostExpressed, data, rowAggFn, yTerms]);
+
+  const syncTopLevelAutoExpandRef = useRef(onSyncTopLevelAutoExpand);
+  syncTopLevelAutoExpandRef.current = onSyncTopLevelAutoExpand;
+  const autoExpandRunNonceRef = useRef(0);
+  const appliedAutoExpandRunNonceRef = useRef(-1);
+
+  useEffect(() => {
+    autoExpandRunNonceRef.current += 1;
+    appliedAutoExpandRunNonceRef.current = -1;
+  }, [autoExpandMostExpressed, rowAggFn]);
+
+  useEffect(() => {
+    if (!isLoading) return;
+    autoExpandRunNonceRef.current += 1;
+    appliedAutoExpandRunNonceRef.current = -1;
+  }, [isLoading]);
+
+  useEffect(() => {
+    if (
+      isLoading ||
+      isInitializingFromUrl ||
+      !topLevelAutoExpandWinnerIds
+    ) {
+      return;
+    }
+    if (appliedAutoExpandRunNonceRef.current === autoExpandRunNonceRef.current) {
+      return;
+    }
+    const sync = syncTopLevelAutoExpandRef.current;
+    if (!sync) return;
+    sync(topLevelAutoExpandWinnerIds);
+    appliedAutoExpandRunNonceRef.current = autoExpandRunNonceRef.current;
+  }, [isLoading, isInitializingFromUrl, topLevelAutoExpandWinnerIds]);
 
   const downloadTsv = () => {
     if (!data) return;
@@ -360,6 +429,8 @@ const Heatmap = ({
             maxCellWidth={cellWidth}
             maxGraphWidth={maxGraphWidth}
             setGraphWidth={setGraphWidth}
+            rowOrdering={rowOrdering}
+            rowAggFn={rowAggFn}
           />
 
           <Tooltip
@@ -591,11 +662,11 @@ const Heatmap = ({
                   </table>
               </div>
               <div className="column">
-                { SHOW_DEBUG_OPTIONS ? (
-                  <div>
-                    <h1>DATA</h1>
-                    <table>
-                      <tbody>
+                <div>
+                  <h1>DATA</h1>
+                  <table>
+                    <tbody>
+                      {SHOW_DEBUG_OPTIONS ? (
                         <tr>
                           <td>Show missing data:</td>
                           <td>
@@ -606,23 +677,60 @@ const Heatmap = ({
                             />
                           </td>
                         </tr>
+                      ) : null}
+                      <tr>
+                        <td>Row ordering:</td>
+                        <td>
+                          <select value={rowOrdering} onChange={updateRowOrdering}>
+                            <option value="alphabetical">alphabetically</option>
+                            <option value="expression">expression score</option>
+                          </select>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td>Aggregation function:</td>
+                        <td>
+                          <select
+                            value={rowAggFn}
+                            onChange={updateRowAggFn}
+                            disabled={
+                              rowOrdering !== 'expression' &&
+                              !(autoExpandMostExpressed && onSyncTopLevelAutoExpand)
+                            }
+                          >
+                            <option value="mean">mean</option>
+                            <option value="max">max</option>
+                          </select>
+                        </td>
+                      </tr>
+                      {onSyncTopLevelAutoExpand ? (
+                        <tr>
+                          <td>Auto-expand most expressed:</td>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={autoExpandMostExpressed}
+                              onChange={updateAutoExpandMostExpressed}
+                            />
+                          </td>
+                        </tr>
+                      ) : null}
+                      { SHOW_DEBUG_OPTIONS ? (
                         <tr>
                           <td>Show max. descendant score as:</td>
                           <td>
                             <select value={showDescMax} onChange={updateShowDescMax}>
-                                <option value="border">border</option>
-                                <option value="center">center</option>
-                                <option value="split">split cell</option>
-                                <option value="none">none</option>
-                              </select>
+                              <option value="border">border</option>
+                              <option value="center">center</option>
+                              <option value="split">split cell</option>
+                              <option value="none">none</option>
+                            </select>
                           </td>
                         </tr>
-                        
-                      </tbody>
-                    </table>
-                  </div>
-                ): null
-                }
+                      ) : null}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>

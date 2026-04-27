@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useLocation, useHistory } from 'react-router-dom';
 import Bulma from '../Bulma';
 import api from '../../api';
@@ -10,6 +10,22 @@ import config from '../../config.json';
 const APP_VERSION = config.version;
 const URL_VERSION = APP_VERSION.replaceAll('.', '-');
 const URL_ROOT = `${config.archive ? `/${URL_VERSION}` : ''}`;
+
+const logApiError = (context, error, extra = {}) => {
+  const responseData = error?.response?.data;
+  const payload = {
+    message: error?.message || String(error),
+    name: error?.name,
+    code: error?.code,
+    status: error?.response?.status,
+    statusText: error?.response?.statusText,
+    responseData,
+    stack: error?.stack,
+    ...extra,
+  };
+  // eslint-disable-next-line no-console
+  console.error(`${context} - ERROR`, payload);
+};
 
 const DATA_TYPES = [
   {
@@ -51,6 +67,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
   const [dataType, setDataTypes] = useState(ALL_DATA_TYPES);
   const dataTypeKey = 'data_type';
   const dataTypeExpr = useQuery(dataTypeKey);
+  const autoExpandFetchInFlightRef = useRef(new Set());
 
   // Sync local state with URL parameter
   useEffect(() => {
@@ -78,7 +95,7 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
       isFirstSearch: true,
       initSearch,
       pageType: EXPR_CALLS,
-      dataType: dataTypeExpr?.split(','),
+      dataType: dataTypeExpr?.split(',') || dataType,
       dataQuality: 'SILVER',
       selectedExpOrAssay: [],
       selectedSpecies: speciesId,
@@ -272,7 +289,9 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
         setSearchResult(data);
       }
     } catch (error) {
-      console.log(`[GeneExpressionGraph.triggerInitialSearch] ERROR:\n${JSON.stringify(error)}`);
+      logApiError('[GeneExpressionGraph.triggerInitialSearch]', error, {
+        params: getSearchParams(),
+      });
       setIsLoading(false);
     } finally {
       // console.log(`[GeneExpressionGraph.triggerInitialSearch] finally.`)
@@ -449,7 +468,11 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
       setIsLoading(false);
     })
     .catch((error) => {
-      console.log(`[GeneExpressionGraph] triggerSearchChildren - ERROR:\n${JSON.stringify(error)}`);
+      logApiError('[GeneExpressionGraph] triggerSearchChildren', error, {
+        parentId,
+        selectedTissueId,
+        params,
+      });
       setIsLoading(false);
     });
   };
@@ -502,6 +525,57 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
     setAnatomicalTerms(newDrilldown);
     // console.log(`[GeneExpressionGraph] DONE onToggleExpandCollapse.`);
   };
+
+  const syncTopLevelAutoExpand = useCallback((winnerIds) => {
+    if (!winnerIds?.length) return;
+    if (!anatomicalTerms?.length || winnerIds.length !== anatomicalTerms.length) return;
+    const termsToFetch = [];
+    let changed = false;
+    const next = anatomicalTerms.map((root, i) => {
+      const winnerId = winnerIds[i];
+      if (winnerId == null || !root.children?.length) return root;
+      const pool = root.children.filter((c) => c.isTopLevelTerm);
+      const candidates = pool.length ? pool : [...root.children];
+      const expandedAmongCandidates = candidates.filter((c) => c.isExpanded);
+      if (
+        expandedAmongCandidates.length === 1 &&
+        expandedAmongCandidates[0].id === winnerId
+      ) {
+        return root;
+      }
+      changed = true;
+      const newRoot = JSON.parse(JSON.stringify(root));
+      newRoot.children = newRoot.children.map((child) => {
+        const newChild = JSON.parse(JSON.stringify(child));
+        const inCandidates = candidates.some((c) => c.id === child.id);
+        if (!inCandidates) return newChild;
+        if (child.id === winnerId) {
+          if (!child.hasBeenQueried) {
+            termsToFetch.push({ id: child.id, anatEntityId: child.anatEntityId });
+            newChild.hasBeenQueried = true;
+          }
+          newChild.isExpanded = true;
+        } else {
+          newChild.isExpanded = false;
+        }
+        return newChild;
+      });
+      return newRoot;
+    });
+
+    if (changed) {
+      setAnatomicalTerms(next);
+    }
+
+    termsToFetch.forEach(({ id, anatEntityId }) => {
+      if (autoExpandFetchInFlightRef.current.has(id)) return;
+      autoExpandFetchInFlightRef.current.add(id);
+      Promise.resolve(triggerSearchChildren(id, anatEntityId))
+        .finally(() => {
+          autoExpandFetchInFlightRef.current.delete(id);
+        });
+    });
+  }, [anatomicalTerms, triggerSearchChildren]);
 
   const heatmapData = searchResult?.expressionData?.expressionCalls?.map((result) => {
     const { geneId: gId, name: gName } = result.gene;
@@ -628,6 +702,8 @@ const GeneExpressionGraph = ({ geneId, speciesId }) => {
             yTerms={anatomicalTerms}
             termProps={anatomicalTermsProps}
             onToggleExpandCollapse={onToggleExpandCollapse}
+            onSyncTopLevelAutoExpand={syncTopLevelAutoExpand}
+            isLoading={isLoading}
             width={800}
             height={800}
             backgroundColor='white'
